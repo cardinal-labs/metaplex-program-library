@@ -14,7 +14,7 @@ use crate::{
 };
 use anchor_lang::{
     prelude::*,
-    solana_program::{program::invoke, system_instruction},
+    solana_program::{program::invoke, program_pack::Pack, system_instruction},
     AnchorDeserialize, AnchorSerialize, System,
 };
 use anchor_spl::{
@@ -223,6 +223,10 @@ pub mod membership_token {
             let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
             token::transfer(cpi_ctx, market.price)?;
         } else {
+            if user_token_account.key() != user_wallet.key() {
+                return Err(ErrorCode::UserWalletMustMatchUserTokenAccount.into());
+            }
+
             invoke(
                 // for native SOL transfer user_wallet key == user_token_account key
                 &system_instruction::transfer(
@@ -441,8 +445,8 @@ pub mod membership_token {
         let token_program = &ctx.accounts.token_program;
         let associated_token_program = &ctx.accounts.associated_token_program;
         let system_program = &ctx.accounts.system_program;
-        let treasury_holder = &ctx.accounts.treasury_holder;
-        let treasury_mint = &ctx.accounts.treasury_mint;
+        let treasury_holder = Box::new(&ctx.accounts.treasury_holder);
+        let treasury_mint = Box::new(&ctx.accounts.treasury_mint);
         let treasury_owner = &ctx.accounts.owner;
         let destination = &ctx.accounts.destination;
         let selling_resource = &ctx.accounts.selling_resource;
@@ -502,8 +506,19 @@ pub mod membership_token {
             return Err(ErrorCode::PayoutTicketExists.into());
         }
 
+        let is_native = market.treasury_mint == System::id();
+
         // Calculate amount
-        let total_amount = treasury_holder.amount;
+        let total_amount = if is_native {
+            treasury_holder.lamports()
+        } else {
+            let token_account = spl_token::state::Account::unpack(&treasury_holder.data.borrow())?;
+            if token_account.owner != treasury_owner.key() {
+                return Err(ErrorCode::DerivedKeyInvalid.into());
+            }
+
+            token_account.amount
+        };
         let amount = if metadata.primary_sale_happened {
             if let Some(funder_creator) = funder_creator {
                 let share_bp = (funder_creator.share as u64)
@@ -573,7 +588,7 @@ pub mod membership_token {
             &[treasury_owner_bump],
         ]];
 
-        if market.treasury_mint == System::id() {
+        if is_native {
             if funder_key != destination.key() {
                 return Err(ErrorCode::InvalidFunderDestination.into());
             }
@@ -585,6 +600,14 @@ pub mod membership_token {
                 signer_seeds[0],
             )?;
         } else {
+            if *treasury_mint.owner != spl_token::id() {
+                return Err(ProgramError::InvalidArgument);
+            }
+
+            if *treasury_holder.owner != spl_token::id() {
+                return Err(ProgramError::InvalidArgument);
+            }
+
             let associated_token_account =
                 get_associated_token_address(&funder_key, &market.treasury_mint);
 
@@ -752,11 +775,6 @@ pub mod membership_token {
             }
         }
 
-        // Check, that `SellingResource` is `Exhausted`
-        if selling_resource.state != SellingResourceState::Exhausted {
-            return Err(ErrorCode::SellingResourceInInvalidState.into());
-        }
-
         // Check, that treasury balance is zero
         if treasury_holder.amount != 0 {
             return Err(ErrorCode::TreasuryIsNotEmpty.into());
@@ -921,13 +939,13 @@ pub struct ChangeMarket<'info> {
 #[instruction(treasury_owner_bump: u8, payout_ticket_bump: u8)]
 pub struct Withdraw<'info> {
     #[account(has_one=treasury_holder, has_one=selling_resource, has_one=treasury_mint)]
-    market: Account<'info, Market>,
-    selling_resource: Account<'info, SellingResource>,
+    market: Box<Account<'info, Market>>,
+    selling_resource: Box<Account<'info, SellingResource>>,
     #[account(owner=mpl_token_metadata::id())]
     metadata: UncheckedAccount<'info>,
-    #[account(mut, has_one=owner)]
-    treasury_holder: Box<Account<'info, TokenAccount>>,
-    treasury_mint: Box<Account<'info, Mint>>,
+    #[account(mut)]
+    treasury_holder: UncheckedAccount<'info>,
+    treasury_mint: UncheckedAccount<'info>,
     #[account(seeds=[HOLDER_PREFIX.as_bytes(), market.treasury_mint.as_ref(), market.selling_resource.as_ref()], bump=treasury_owner_bump)]
     owner: UncheckedAccount<'info>,
     #[account(mut)]
