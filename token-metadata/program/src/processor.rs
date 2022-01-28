@@ -5,6 +5,7 @@ use crate::{
             assert_has_collection_authority,
         },
         uses::process_use_authority_validation,
+        freezes::{process_freeze_authority_validation, assert_freeze_authority_matches_mint}
     },
     deprecated_processor::{
         process_deprecated_create_metadata_accounts, process_deprecated_update_metadata_accounts,
@@ -12,14 +13,15 @@ use crate::{
     error::MetadataError,
     instruction::MetadataInstruction,
     state::{
-        CollectionAuthorityRecord, DataV2, Key, MasterEditionV1, MasterEditionV2, Metadata,
-        TokenStandard, UseAuthorityRecord, UseMethod, Uses, BURN, COLLECTION_AUTHORITY,
-        COLLECTION_AUTHORITY_RECORD_SIZE, EDITION, MAX_MASTER_EDITION_LEN, PREFIX, USER,
-        USE_AUTHORITY_RECORD_SIZE,
+        DataV2, Key, MasterEditionV1, MasterEditionV2, Metadata,
+        TokenStandard, UseMethod, Uses, BURN, COLLECTION_AUTHORITY,
+        EDITION, MAX_MASTER_EDITION_LEN, PREFIX, USER, FREEZER,
+        UseAuthorityRecord, CollectionAuthorityRecord, FreezeAuthorityRecord,
+        USE_AUTHORITY_RECORD_SIZE, COLLECTION_AUTHORITY_RECORD_SIZE, FREEZE_AUTHORITY_RECORD_SIZE,
     },
     utils::{
         assert_currently_holding, assert_data_valid, assert_derivation, assert_initialized,
-        assert_mint_authority_matches_mint, assert_owned_by, assert_signer,
+        assert_mint_authority_matches_mint, assert_owned_by, assert_signer, assert_currently_holding_or_delegated,
         assert_token_program_matches_package, assert_update_authority_is_correct,
         create_or_allocate_account_raw, get_owner_from_token_account,
         process_create_metadata_accounts_logic,
@@ -35,12 +37,12 @@ use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
     msg,
-    program::invoke,
+    program::{invoke, invoke_signed},
     program_error::ProgramError,
     pubkey::Pubkey,
 };
 use spl_token::{
-    instruction::{approve, revoke},
+    instruction::{approve, revoke, freeze_account, thaw_account},
     state::{Account, Mint},
 };
 
@@ -1123,6 +1125,244 @@ pub fn process_revoke_collection_authority(
     **collection_authority_record.lamports.borrow_mut() = 0;
     **update_authority.lamports.borrow_mut() = lamports;
     let mut data = collection_authority_record.try_borrow_mut_data()?;
+    data[0] = 0;
+    Ok(())
+}
+
+pub fn process_freeze(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let freeze_authority_record_info = next_account_info(account_info_iter)?;
+    let metadata_info = next_account_info(account_info_iter)?;
+    let token_account_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let user_info = next_account_info(account_info_iter)?;
+    let owner_info = next_account_info(account_info_iter)?;
+    let token_program_account_info = next_account_info(account_info_iter)?;
+    let metadata = Metadata::from_account_info(metadata_info)?;
+    if *token_program_account_info.key != spl_token::id() {
+        return Err(MetadataError::InvalidTokenProgram.into());
+    }
+
+    assert_signer(&user_info)?;
+    assert_currently_holding_or_delegated(
+        program_id,
+        owner_info,
+        metadata_info,
+        &metadata,
+        mint_info,
+        token_account_info,
+    )?;
+    assert_owned_by(freeze_authority_record_info, program_id)?;
+    process_freeze_authority_validation(
+        program_id,
+        freeze_authority_record_info,
+        user_info,
+        mint_info,
+        false,
+    )?;
+
+    let metadata_info_path = Vec::from([
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        &mint_info.key.as_ref(),
+    ]);
+    let metadata_info_path_bump_seed = &[assert_derivation(
+        program_id,
+        metadata_info,
+        &metadata_info_path,
+    )?];
+    let mut metadata_info_seeds = metadata_info_path.clone();
+    metadata_info_seeds.push(metadata_info_path_bump_seed);
+    invoke_signed(
+        &freeze_account(
+            &token_program_account_info.key,
+            &token_account_info.key,
+            &mint_info.key,
+            &metadata_info.key,
+            &[],
+        )
+        .unwrap(),
+        &[
+            token_account_info.clone(),
+            mint_info.clone(),
+            metadata_info.clone(),
+        ],
+        &[&metadata_info_seeds],
+    )?;
+    Ok(())
+}
+
+pub fn process_thaw(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let freeze_authority_record_info = next_account_info(account_info_iter)?;
+    let metadata_info = next_account_info(account_info_iter)?;
+    let token_account_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let user_info = next_account_info(account_info_iter)?;
+    let owner_info = next_account_info(account_info_iter)?;
+    let token_program_account_info = next_account_info(account_info_iter)?;
+    let metadata = Metadata::from_account_info(metadata_info)?;
+    if *token_program_account_info.key != spl_token::id() {
+        return Err(MetadataError::InvalidTokenProgram.into());
+    }
+
+    assert_signer(&user_info)?;
+    assert_currently_holding_or_delegated(
+        program_id,
+        owner_info,
+        metadata_info,
+        &metadata,
+        mint_info,
+        token_account_info,
+    )?;
+    assert_owned_by(freeze_authority_record_info, program_id)?;
+    process_freeze_authority_validation(
+        program_id,
+        freeze_authority_record_info,
+        user_info,
+        mint_info,
+        false,
+    )?;
+
+    let metadata_info_path = Vec::from([
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        &mint_info.key.as_ref(),
+    ]);
+    let metadata_info_path_bump_seed = &[assert_derivation(
+        program_id,
+        metadata_info,
+        &metadata_info_path,
+    )?];
+    let mut metadata_info_seeds = metadata_info_path.clone();
+    metadata_info_seeds.push(metadata_info_path_bump_seed);
+    invoke_signed(
+        &thaw_account(
+            &token_program_account_info.key,
+            &token_account_info.key,
+            &mint_info.key,
+            &metadata_info.key,
+            &[],
+        )
+        .unwrap(),
+        &[
+            token_account_info.clone(),
+            mint_info.clone(),
+            metadata_info.clone(),
+        ],
+        &[&metadata_info_seeds],
+    )?;
+    Ok(())
+}
+
+pub fn process_approve_freeze_authority(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let freeze_authority_record_info = next_account_info(account_info_iter)?;
+    let owner_info = next_account_info(account_info_iter)?;
+    let payer = next_account_info(account_info_iter)?;
+    let user_info = next_account_info(account_info_iter)?;
+    let token_account_info = next_account_info(account_info_iter)?;
+    let metadata_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let token_program_account_info = next_account_info(account_info_iter)?;
+    let system_account_info = next_account_info(account_info_iter)?;
+    let rent_info = next_account_info(account_info_iter)?;
+    let metadata = Metadata::from_account_info(metadata_info)?;
+    if *token_program_account_info.key != spl_token::id() {
+        return Err(MetadataError::InvalidTokenProgram.into());
+    }
+
+    let mint: Mint = assert_initialized(token_account_info)?;
+    assert_owned_by(mint_info, &spl_token::id())?;
+    assert_freeze_authority_matches_mint(&mint.freeze_authority, metadata_info)?;
+
+    assert_signer(&owner_info)?;
+    assert_signer(&payer)?;
+    assert_currently_holding(
+        program_id,
+        owner_info,
+        metadata_info,
+        &metadata,
+        mint_info,
+        token_account_info,
+    )?;
+
+    let bump_seed = process_freeze_authority_validation(
+        program_id,
+        freeze_authority_record_info,
+        user_info,
+        mint_info,
+        true,
+    )?;
+
+    let freeze_authority_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        &mint_info.key.as_ref(),
+        FREEZER.as_bytes(),
+        &user_info.key.as_ref(),
+        &[bump_seed],
+    ];
+
+    create_or_allocate_account_raw(
+        *program_id,
+        freeze_authority_record_info,
+        rent_info,
+        system_account_info,
+        payer,
+        FREEZE_AUTHORITY_RECORD_SIZE,
+        freeze_authority_seeds
+    )?;
+    let mut record = FreezeAuthorityRecord::from_account_info(freeze_authority_record_info)?;
+    record.key = Key::FreezeAuthorityRecord;
+    record.serialize(&mut *freeze_authority_record_info.data.borrow_mut())?;
+    Ok(())
+}
+
+pub fn process_revoke_freeze_authority(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let freeze_authority_record_info = next_account_info(account_info_iter)?;
+    let owner_info = next_account_info(account_info_iter)?;
+    let user_info = next_account_info(account_info_iter)?;
+    let token_account_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let metadata_info = next_account_info(account_info_iter)?;
+    let metadata = Metadata::from_account_info(metadata_info)?;
+    assert_signer(&owner_info)?;
+    assert_currently_holding(
+        program_id,
+        owner_info,
+        metadata_info,
+        &metadata,
+        mint_info,
+        token_account_info,
+    )?;
+    process_freeze_authority_validation(
+        program_id,
+        freeze_authority_record_info,
+        user_info,
+        mint_info,
+        false,
+    )?;
+    let lamports = freeze_authority_record_info.lamports();
+    **freeze_authority_record_info.lamports.borrow_mut() = 0;
+    **owner_info.lamports.borrow_mut() = owner_info
+        .lamports()
+        .checked_add(lamports)
+        .ok_or(MetadataError::NumericalOverflowError)?;
+    let mut data = freeze_authority_record_info.try_borrow_mut_data()?;
     data[0] = 0;
     Ok(())
 }

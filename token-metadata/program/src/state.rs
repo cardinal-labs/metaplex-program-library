@@ -14,6 +14,8 @@ pub const RESERVATION: &str = "reservation";
 
 pub const USER: &str = "user";
 
+pub const FREEZER: &str = "freezer";
+
 pub const BURN: &str = "burn";
 
 pub const COLLECTION_AUTHORITY: &str = "collection_authority";
@@ -75,6 +77,7 @@ pub const USE_AUTHORITY_RECORD_SIZE: usize = 18; //10 byte padding
 
 pub const COLLECTION_AUTHORITY_RECORD_SIZE: usize = 11; //10 byte padding
 
+pub const FREEZE_AUTHORITY_RECORD_SIZE: usize = 11; //10 byte padding
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone, Copy)]
@@ -88,7 +91,8 @@ pub enum Key {
     MasterEditionV2,
     EditionMarker,
     UseAuthorityRecord,
-    CollectionAuthorityRecord
+    CollectionAuthorityRecord,
+    FreezeAuthorityRecord
 }
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -178,7 +182,6 @@ impl UseAuthorityRecord {
     }
 }
 
-
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct CollectionAuthorityRecord {
@@ -200,6 +203,23 @@ pub struct Collection {
     pub verified: bool,
     pub key: Pubkey,
 }
+
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct FreezeAuthorityRecord {
+    pub key: Key, //1
+}
+
+impl FreezeAuthorityRecord {
+    pub fn from_account_info(a: &AccountInfo) -> Result<FreezeAuthorityRecord, ProgramError> {
+        let ua: FreezeAuthorityRecord =
+            try_from_slice_checked(&a.data.borrow_mut(), Key::FreezeAuthorityRecord, FREEZE_AUTHORITY_RECORD_SIZE)?;
+
+        Ok(ua)
+    }
+}
+
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]

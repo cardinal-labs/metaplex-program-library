@@ -352,6 +352,15 @@ pub enum MetadataError {
 
     #[error("This Collection Authoritty Record Does Not Exist.")]
     CollectionAuthorityDoesNotExist,
+
+    #[error("The Freeze Authority Record Already Exists, to modify it Revoke, then Approve")]
+    FreezeAuthorityRecordAlreadyExists,
+
+    #[error("The Freeze Authority Record is empty or already revoked")]
+    FreezeAuthorityRecordAlreadyRevoked,
+
+    #[error("Freeze authority provided does not match the freeze authority on the mint")]
+    InvalidFreezeAuthority,
 }
 
 impl PrintProgramError for MetadataError {

@@ -1143,3 +1143,38 @@ pub fn assert_currently_holding(
     }
     Ok(())
 }
+
+pub fn assert_currently_holding_or_delegated(
+    program_id: &Pubkey,
+    owner_info: &AccountInfo,
+    metadata_info: &AccountInfo,
+    metadata: &Metadata,
+    mint_info: &AccountInfo,
+    token_account_info: &AccountInfo,
+) -> ProgramResult {
+    assert_owned_by(metadata_info, program_id)?;
+    assert_owned_by(mint_info, &spl_token::id())?;
+
+    let token_account: Account = assert_initialized(token_account_info)?;
+
+    assert_owned_by(token_account_info, &spl_token::id())?;
+
+    if token_account.mint != *mint_info.key {
+        return Err(MetadataError::MintMismatch.into());
+    }
+
+    if token_account.amount < 1 {
+        return Err(MetadataError::NotEnoughTokens.into());
+    }
+
+    if token_account.mint != metadata.mint {
+        return Err(MetadataError::MintMismatch.into());
+    }
+
+    let is_delegated = token_account.delegate != COption::None && token_account.delegated_amount > 1;
+    // if you are not the owner or the token is delegated and you are not the delegate
+    if token_account.owner != *owner_info.key || (is_delegated && token_account.delegate.unwrap() != *owner_info.key) {
+        return Err(MetadataError::InvalidOwner.into());
+    }
+    Ok(())
+}
