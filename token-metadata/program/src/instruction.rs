@@ -314,16 +314,13 @@ pub enum MetadataInstruction {
     ApproveCollectionAuthority,
     ///See [revoke_collection_authority] for Doc
     RevokeCollectionAuthority,
-<<<<<<< HEAD
     ///See [set_and_verify_collection] for Doc
     SetAndVerifyCollection,
-=======
 
     ///See [freeze_delegated_account] for Doc
     FreezeDelegatedAccount,
     ///See [thaw_delegated_account] for Doc
     ThawDelegatedAccount,
->>>>>>> efa533c (Freeze v2 checking all tokens are delegated)
 }
 
 /// Creates an CreateMetadataAccounts instruction
@@ -1077,6 +1074,8 @@ pub fn set_and_verify_collection(
         program_id,
         accounts,
         data: MetadataInstruction::SetAndVerifyCollection
+            .try_to_vec()
+            .unwrap(),
     }
 }
 
