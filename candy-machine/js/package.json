@@ -1,6 +1,6 @@
 {
-  "name": "@metaplex-foundation/mpl-candy-machine",
-  "version": "4.3.0",
+  "name": "@cardinal/mpl-candy-machine-utils",
+  "version": "4.3.2",
   "programVersion": "4.0.2",
   "description": "MPL Candy Machine JavaScript API. This MPL package is for the current generation of candy machine which is 2.0.0",
   "main": "dist/src/mpl-candy-machine.js",
@@ -33,12 +33,13 @@
   "keywords": [
     "nft",
     "metaplex",
+    "cardinal",
     "solana",
     "blockchain"
   ],
-  "homepage": "https://metaplex.com",
-  "repository": "https://github.com/metaplex-foundation/metaplex-program-library.git",
-  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "homepage": "https://cardinal.so",
+  "repository": "https://github.com/cardinal-labs/metaplex-program-library.git",
+  "author": "Cardinal Labs <team@cardinal.so>",
   "license": "Apache-2.0",
   "dependencies": {
     "@cardinal/token-manager": "1.4.6",

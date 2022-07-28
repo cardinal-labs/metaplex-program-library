@@ -6,11 +6,11 @@ const sdkDir = path.join(__dirname, 'src', 'generated');
 const binaryInstallDir = path.join(__dirname, '.crates');
 
 module.exports = {
-    idlGenerator: 'anchor',
-    programName: 'candy_machine',
-    programId: 'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
-    idlDir,
-    sdkDir,
-    binaryInstallDir,
-    programDir,
+  idlGenerator: 'anchor',
+  programName: 'candy_machine',
+  programId: 'ccmpgw68x3NJmNPePFrTm6TsKCEYUVhF8rEAVL9rSDd',
+  idlDir,
+  sdkDir,
+  binaryInstallDir,
+  programDir,
 };
