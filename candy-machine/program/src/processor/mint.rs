@@ -1053,12 +1053,24 @@ fn handle_time_invalidator<'info>(
     let cpi_ctx = CpiContext::new(time_invalidator_program.to_account_info(), cpi_accounts);
     cardinal_time_invalidator::cpi::init(cpi_ctx, time_invalidator_init_ix)?;
 
-    // add invalidator
+    // add time invalidator
     let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
         token_manager: token_manager.to_account_info(),
         issuer: ctx.accounts.payer.to_account_info(),
     };
     let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
     cardinal_token_manager::cpi::add_invalidator(cpi_ctx, time_invalidator.key())?;
+
+    // add manual invalidator
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
+        token_manager: token_manager.to_account_info(),
+        issuer: ctx.accounts.payer.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::add_invalidator(
+        cpi_ctx,
+        ctx.accounts.candy_machine_creator.to_account_info(),
+    )?;
+
     Ok(())
 }
