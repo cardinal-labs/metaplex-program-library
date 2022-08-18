@@ -319,7 +319,9 @@ test('Mint with lockup', async (t) => {
     {
       ...mintIx,
       keys: [
-        ...mintIx.keys,
+        ...mintIx.keys.map((k) =>
+          k.pubkey.equals(nftToMintKeypair.publicKey) ? { ...k, isSigner: true } : k,
+        ),
         // remaining accounts for minting the token during execution
         {
           pubkey: tokenAccountToReceive,

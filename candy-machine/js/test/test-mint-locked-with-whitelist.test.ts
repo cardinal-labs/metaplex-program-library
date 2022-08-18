@@ -388,7 +388,9 @@ test('Mint with lockup and whitelist', async (t) => {
     {
       ...mintIx,
       keys: [
-        ...mintIx.keys,
+        ...mintIx.keys.map((k) =>
+          k.pubkey.equals(nftToMintKeypair.publicKey) ? { ...k, isSigner: true } : k,
+        ),
         // remaining accounts for whitelist
         {
           pubkey: whitelistMintTokenAccount,
