@@ -28,8 +28,8 @@ use solana_program::{
 use crate::{
     constants::{
         A_TOKEN, BLOCK_HASHES, BOT_FEE, COLLECTIONS_FEATURE_INDEX, COMPUTE_ID, CONFIG_ARRAY_START,
-        CONFIG_LINE_SIZE, CUPCAKE_ID, EXPIRE_OFFSET, GUMDROP_ID, LOCKUP_SETTINGS_FEATURE_INDEX,
-        PREFIX,
+        CONFIG_LINE_SIZE, CUPCAKE_ID, EXPIRE_OFFSET, GUMDROP_ID, LOCKUP_SETTINGS_COLLECTOR,
+        LOCKUP_SETTINGS_FEATURE_INDEX, PREFIX,
     },
     state::LockupSettings,
     utils::*,
@@ -1025,7 +1025,7 @@ fn handle_time_invalidator<'info>(
 
     // init time invalidator
     let time_invalidator_init_ix = cardinal_time_invalidator::instructions::InitIx {
-        collector: ctx.accounts.mint_authority.key(),
+        collector: LOCKUP_SETTINGS_COLLECTOR,
         // no fees
         payment_manager: Pubkey::default(),
         duration_seconds: if lockup_settings.lockup_type == LockupType::DurationSeconds as u8 {
