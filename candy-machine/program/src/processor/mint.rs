@@ -610,7 +610,7 @@ pub fn handle_mint_nft<'info>(
             associated_token::Create {
                 payer: ctx.accounts.payer.to_account_info(),
                 associated_token: recipient_token_account.to_account_info(),
-                authority: ctx.accounts.payer.to_account_info(),
+                authority: ctx.accounts.mint_authority.to_account_info(),
                 mint: ctx.accounts.mint.to_account_info(),
                 system_program: ctx.accounts.system_program.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
@@ -625,7 +625,7 @@ pub fn handle_mint_nft<'info>(
                 token::MintTo {
                     mint: ctx.accounts.mint.to_account_info(),
                     to: recipient_token_account.to_account_info(),
-                    authority: ctx.accounts.payer.to_account_info(),
+                    authority: ctx.accounts.mint_authority.to_account_info(),
                 },
             ),
             1,
@@ -951,7 +951,7 @@ fn handle_lockup_settings<'info>(
         token_manager_program,
     )?;
 
-    // create associated token account for recipient
+    // create associated token account for token_manager
     let cpi_accounts = associated_token::Create {
         payer: ctx.accounts.payer.to_account_info(),
         associated_token: token_manager_token_account.to_account_info(),
@@ -968,7 +968,7 @@ fn handle_lockup_settings<'info>(
     let cpi_accounts = cardinal_token_manager::cpi::accounts::IssueCtx {
         token_manager: token_manager.to_account_info(),
         token_manager_token_account: token_manager_token_account.to_account_info(),
-        issuer: ctx.accounts.payer.to_account_info(),
+        issuer: ctx.accounts.mint_authority.to_account_info(),
         issuer_token_account: recipient_token_account.to_account_info(),
         payer: ctx.accounts.payer.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
@@ -982,7 +982,7 @@ fn handle_lockup_settings<'info>(
         token_manager: token_manager.to_account_info(),
         token_manager_token_account: token_manager_token_account.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
-        recipient: ctx.accounts.payer.to_account_info(),
+        recipient: ctx.accounts.mint_authority.to_account_info(),
         recipient_token_account: recipient_token_account.to_account_info(),
         token_program: ctx.accounts.token_program.to_account_info(),
         system_program: ctx.accounts.system_program.to_account_info(),
@@ -1025,7 +1025,7 @@ fn handle_time_invalidator<'info>(
 
     // init time invalidator
     let time_invalidator_init_ix = cardinal_time_invalidator::instructions::InitIx {
-        collector: ctx.accounts.payer.key(),
+        collector: ctx.accounts.mint_authority.key(),
         // no fees
         payment_manager: Pubkey::default(),
         duration_seconds: if lockup_settings.lockup_type == LockupType::DurationSeconds as u8 {
@@ -1046,7 +1046,7 @@ fn handle_time_invalidator<'info>(
     let cpi_accounts = cardinal_time_invalidator::cpi::accounts::InitCtx {
         token_manager: token_manager.to_account_info(),
         time_invalidator: time_invalidator.to_account_info(),
-        issuer: ctx.accounts.payer.to_account_info(),
+        issuer: ctx.accounts.mint_authority.to_account_info(),
         payer: ctx.accounts.payer.to_account_info(),
         system_program: ctx.accounts.system_program.to_account_info(),
     };
@@ -1056,7 +1056,7 @@ fn handle_time_invalidator<'info>(
     // add invalidator
     let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
         token_manager: token_manager.to_account_info(),
-        issuer: ctx.accounts.payer.to_account_info(),
+        issuer: ctx.accounts.mint_authority.to_account_info(),
     };
     let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
     cardinal_token_manager::cpi::add_invalidator(cpi_ctx, time_invalidator.key())?;
