@@ -597,8 +597,8 @@ pub fn handle_mint_nft<'info>(
                 },
             ),
             0,
-            &ctx.accounts.payer.key(),
-            Some(&ctx.accounts.payer.key()),
+            &ctx.accounts.mint_authority.key(),
+            Some(&ctx.accounts.mint_authority.key()),
         )?;
 
         let recipient_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
@@ -934,7 +934,7 @@ fn handle_lockup_settings<'info>(
     let cpi_accounts = cardinal_token_manager::cpi::accounts::InitCtx {
         token_manager: token_manager.to_account_info(),
         mint_counter: mint_counter.to_account_info(),
-        issuer: ctx.accounts.payer.to_account_info(),
+        issuer: ctx.accounts.mint_authority.to_account_info(),
         payer: ctx.accounts.payer.to_account_info(),
         issuer_token_account: recipient_token_account.to_account_info(),
         system_program: ctx.accounts.system_program.to_account_info(),
