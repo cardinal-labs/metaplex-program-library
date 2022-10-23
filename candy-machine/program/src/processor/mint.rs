@@ -29,9 +29,9 @@ use crate::{
     constants::{
         A_TOKEN, BLOCK_HASHES, BOT_FEE, COLLECTIONS_FEATURE_INDEX, COMPUTE_ID, CONFIG_ARRAY_START,
         CONFIG_LINE_SIZE, CUPCAKE_ID, EXPIRE_OFFSET, GUMDROP_ID, LOCKUP_SETTINGS_FEATURE_INDEX,
-        PREFIX,
+        PERMISSIONED_SETTINGS_FEATURE_INDEX, PREFIX,
     },
-    state::LockupSettings,
+    state::{LockupSettings, PermissionedSettings},
     utils::*,
     CandyError, CandyMachine, CandyMachineData, ConfigLine, EndSettingType, LockupType,
     WhitelistMintMode, WhitelistMintSettings,
@@ -109,13 +109,22 @@ pub struct MintNFT<'info> {
     // time_invalidator
     // time_invalidator_program
     // token_manager_program
+    // > Only needed if candy machine has permissioned settings feature flag enabled
+    // permissioned_settings
+    // token_manager
+    // token_manager_token_account
+    // mint_counter
+    // recipient_token_account
+    // mint_manager
+    // token program
+    // token manager program
+    // TODO
 }
 
 pub fn handle_mint_nft<'info>(
     ctx: Context<'_, '_, '_, 'info, MintNFT<'info>>,
     creator_bump: u8,
 ) -> Result<()> {
-    let candy_machine = &mut ctx.accounts.candy_machine;
     let candy_machine_creator = &ctx.accounts.candy_machine_creator;
     // Note this is the wallet of the Candy machine
     let wallet = &ctx.accounts.wallet;
@@ -168,7 +177,10 @@ pub fn handle_mint_nft<'info>(
             }
         }
         Err(_) => {
-            if is_feature_active(&candy_machine.data.uuid, COLLECTIONS_FEATURE_INDEX) {
+            if is_feature_active(
+                &ctx.accounts.candy_machine.data.uuid,
+                COLLECTIONS_FEATURE_INDEX,
+            ) {
                 punish_bots(
                     CandyError::MissingSetCollectionDuringMint,
                     payer.to_account_info(),
@@ -214,12 +226,15 @@ pub fn handle_mint_nft<'info>(
         }
     }
 
-    let mut price = candy_machine.data.price;
-    if let Some(es) = &candy_machine.data.end_settings {
+    let mut price = ctx.accounts.candy_machine.data.price;
+    if let Some(es) = &ctx.accounts.candy_machine.data.end_settings {
         match es.end_setting_type {
             EndSettingType::Date => {
                 if clock.unix_timestamp > es.number as i64
-                    && !cmp_pubkeys(&ctx.accounts.payer.key(), &candy_machine.authority)
+                    && !cmp_pubkeys(
+                        &ctx.accounts.payer.key(),
+                        &ctx.accounts.candy_machine.authority,
+                    )
                 {
                     punish_bots(
                         CandyError::CandyMachineNotLive,
@@ -232,8 +247,11 @@ pub fn handle_mint_nft<'info>(
                 }
             }
             EndSettingType::Amount => {
-                if candy_machine.items_redeemed >= es.number {
-                    if !cmp_pubkeys(&ctx.accounts.payer.key(), &candy_machine.authority) {
+                if ctx.accounts.candy_machine.items_redeemed >= es.number {
+                    if !cmp_pubkeys(
+                        &ctx.accounts.payer.key(),
+                        &ctx.accounts.candy_machine.authority,
+                    ) {
                         punish_bots(
                             CandyError::CandyMachineEmpty,
                             payer.to_account_info(),
@@ -249,7 +267,7 @@ pub fn handle_mint_nft<'info>(
         }
     }
     let mut remaining_accounts_counter: usize = 0;
-    if let Some(gatekeeper) = &candy_machine.data.gatekeeper {
+    if let Some(gatekeeper) = &ctx.accounts.candy_machine.data.gatekeeper {
         if ctx.remaining_accounts.len() <= remaining_accounts_counter {
             punish_bots(
                 CandyError::GatewayTokenMissing,
@@ -265,25 +283,27 @@ pub fn handle_mint_nft<'info>(
         remaining_accounts_counter += 1;
 
         // Eval function used in the gateway CPI
-        let eval_function =
-            |token: &InPlaceGatewayToken<&[u8]>| match (&candy_machine.data, token.expire_time()) {
-                (
-                    CandyMachineData {
-                        go_live_date: Some(go_live_date),
-                        whitelist_mint_settings: Some(WhitelistMintSettings { presale, .. }),
-                        ..
-                    },
-                    Some(expire_time),
-                ) if !*presale && expire_time < go_live_date + EXPIRE_OFFSET => {
-                    msg!(
-                        "Invalid gateway token: calculated creation time {} and go_live_date {}",
-                        expire_time - EXPIRE_OFFSET,
-                        go_live_date
-                    );
-                    Err(error!(CandyError::GatewayTokenExpireTimeInvalid).into())
-                }
-                _ => Ok(()),
-            };
+        let eval_function = |token: &InPlaceGatewayToken<&[u8]>| match (
+            &ctx.accounts.candy_machine.data,
+            token.expire_time(),
+        ) {
+            (
+                CandyMachineData {
+                    go_live_date: Some(go_live_date),
+                    whitelist_mint_settings: Some(WhitelistMintSettings { presale, .. }),
+                    ..
+                },
+                Some(expire_time),
+            ) if !*presale && expire_time < go_live_date + EXPIRE_OFFSET => {
+                msg!(
+                    "Invalid gateway token: calculated creation time {} and go_live_date {}",
+                    expire_time - EXPIRE_OFFSET,
+                    go_live_date
+                );
+                Err(error!(CandyError::GatewayTokenExpireTimeInvalid).into())
+            }
+            _ => Ok(()),
+        };
 
         if gatekeeper.expire_on_use {
             if ctx.remaining_accounts.len() <= remaining_accounts_counter {
@@ -338,7 +358,7 @@ pub fn handle_mint_nft<'info>(
         }
     }
 
-    if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
+    if let Some(ws) = &ctx.accounts.candy_machine.data.whitelist_mint_settings {
         let whitelist_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
         remaining_accounts_counter += 1;
         // If the user has not actually made this account,
@@ -348,10 +368,12 @@ pub fn handle_mint_nft<'info>(
         match assert_is_ata(whitelist_token_account, &payer.key(), &ws.mint) {
             Ok(wta) => {
                 if wta.amount > 0 {
-                    match candy_machine.data.go_live_date {
+                    match ctx.accounts.candy_machine.data.go_live_date {
                         None => {
-                            if !cmp_pubkeys(&ctx.accounts.payer.key(), &candy_machine.authority)
-                                && !ws.presale
+                            if !cmp_pubkeys(
+                                &ctx.accounts.payer.key(),
+                                &ctx.accounts.candy_machine.authority,
+                            ) && !ws.presale
                             {
                                 punish_bots(
                                     CandyError::CandyMachineNotLive,
@@ -365,7 +387,10 @@ pub fn handle_mint_nft<'info>(
                         }
                         Some(val) => {
                             if clock.unix_timestamp < val
-                                && !cmp_pubkeys(&ctx.accounts.payer.key(), &candy_machine.authority)
+                                && !cmp_pubkeys(
+                                    &ctx.accounts.payer.key(),
+                                    &ctx.accounts.candy_machine.authority,
+                                )
                                 && !ws.presale
                             {
                                 punish_bots(
@@ -429,7 +454,7 @@ pub fn handle_mint_nft<'info>(
                         )?;
                         return Ok(());
                     }
-                    let go_live = assert_valid_go_live(payer, clock, candy_machine);
+                    let go_live = assert_valid_go_live(payer, clock, &ctx.accounts.candy_machine);
                     if go_live.is_err() {
                         punish_bots(
                             CandyError::CandyMachineNotLive,
@@ -462,7 +487,7 @@ pub fn handle_mint_nft<'info>(
                 if ws.mode == WhitelistMintMode::BurnEveryTime {
                     remaining_accounts_counter += 2;
                 }
-                let go_live = assert_valid_go_live(payer, clock, candy_machine);
+                let go_live = assert_valid_go_live(payer, clock, &ctx.accounts.candy_machine);
                 if go_live.is_err() {
                     punish_bots(
                         CandyError::CandyMachineNotLive,
@@ -477,7 +502,7 @@ pub fn handle_mint_nft<'info>(
         }
     } else {
         // no whitelist means normal datecheck
-        let go_live = assert_valid_go_live(payer, clock, candy_machine);
+        let go_live = assert_valid_go_live(payer, clock, &ctx.accounts.candy_machine);
         if go_live.is_err() {
             punish_bots(
                 CandyError::CandyMachineNotLive,
@@ -490,7 +515,8 @@ pub fn handle_mint_nft<'info>(
         }
     }
 
-    if candy_machine.items_redeemed >= candy_machine.data.items_available {
+    if ctx.accounts.candy_machine.items_redeemed >= ctx.accounts.candy_machine.data.items_available
+    {
         punish_bots(
             CandyError::CandyMachineEmpty,
             payer.to_account_info(),
@@ -501,7 +527,7 @@ pub fn handle_mint_nft<'info>(
         return Ok(());
     }
 
-    if let Some(mint) = candy_machine.token_mint {
+    if let Some(mint) = ctx.accounts.candy_machine.token_mint {
         let token_account_info = &ctx.remaining_accounts[remaining_accounts_counter];
         remaining_accounts_counter += 1;
         let transfer_authority_info = &ctx.remaining_accounts[remaining_accounts_counter];
@@ -541,17 +567,23 @@ pub fn handle_mint_nft<'info>(
 
     let index = u64::from_le_bytes(*most_recent);
     let modded: usize = index
-        .checked_rem(candy_machine.data.items_available)
+        .checked_rem(ctx.accounts.candy_machine.data.items_available)
         .ok_or(CandyError::NumericalOverflowError)? as usize;
 
-    let config_line = get_config_line(candy_machine, modded, candy_machine.items_redeemed)?;
+    let config_line = get_config_line(
+        &ctx.accounts.candy_machine,
+        modded,
+        ctx.accounts.candy_machine.items_redeemed,
+    )?;
 
-    candy_machine.items_redeemed = candy_machine
+    ctx.accounts.candy_machine.items_redeemed = ctx
+        .accounts
+        .candy_machine
         .items_redeemed
         .checked_add(1)
         .ok_or(CandyError::NumericalOverflowError)?;
 
-    let cm_key = candy_machine.key();
+    let cm_key = ctx.accounts.candy_machine.key();
     let authority_seeds = [PREFIX.as_bytes(), cm_key.as_ref(), &[creator_bump]];
 
     let mut creators: Vec<mpl_token_metadata::state::Creator> =
@@ -561,7 +593,7 @@ pub fn handle_mint_nft<'info>(
             share: 0,
         }];
 
-    for c in &candy_machine.data.creators {
+    for c in &ctx.accounts.candy_machine.data.creators {
         creators.push(mpl_token_metadata::state::Creator {
             address: c.address,
             verified: false,
@@ -665,12 +697,12 @@ pub fn handle_mint_nft<'info>(
             ctx.accounts.payer.key(),
             candy_machine_creator.key(),
             config_line.name,
-            candy_machine.data.symbol.clone(),
+            ctx.accounts.candy_machine.data.symbol.clone(),
             config_line.uri,
             Some(creators),
-            candy_machine.data.seller_fee_basis_points,
+            ctx.accounts.candy_machine.data.seller_fee_basis_points,
             true,
-            candy_machine.data.is_mutable,
+            ctx.accounts.candy_machine.data.is_mutable,
             None,
             None,
         ),
@@ -686,15 +718,15 @@ pub fn handle_mint_nft<'info>(
             ctx.accounts.mint_authority.key(),
             ctx.accounts.metadata.key(),
             ctx.accounts.payer.key(),
-            Some(candy_machine.data.max_supply),
+            Some(ctx.accounts.candy_machine.data.max_supply),
         ),
         master_edition_infos.as_slice(),
         &[&authority_seeds],
     )?;
 
-    let mut new_update_authority = Some(candy_machine.authority);
+    let mut new_update_authority = Some(ctx.accounts.candy_machine.authority);
 
-    if !candy_machine.data.retain_authority {
+    if !ctx.accounts.candy_machine.data.retain_authority {
         new_update_authority = Some(ctx.accounts.update_authority.key());
     }
     invoke_signed(
@@ -705,7 +737,7 @@ pub fn handle_mint_nft<'info>(
             new_update_authority,
             None,
             Some(true),
-            if !candy_machine.data.is_mutable {
+            if !ctx.accounts.candy_machine.data.is_mutable {
                 Some(false)
             } else {
                 None
@@ -719,7 +751,7 @@ pub fn handle_mint_nft<'info>(
         &[&authority_seeds],
     )?;
 
-    let candy_machine_data = &candy_machine.data;
+    let candy_machine_data = &ctx.accounts.candy_machine.data;
     let uuid = candy_machine_data.uuid.clone();
     if is_feature_active(&uuid, LOCKUP_SETTINGS_FEATURE_INDEX) {
         if ctx.remaining_accounts.len() <= remaining_accounts_counter {
@@ -728,10 +760,27 @@ pub fn handle_mint_nft<'info>(
         let lockup_settings_info = &ctx.remaining_accounts[remaining_accounts_counter];
         remaining_accounts_counter += 1;
         let lockup_settings = Account::<LockupSettings>::try_from(lockup_settings_info)?;
-        if lockup_settings.candy_machine != candy_machine.key() {
+        if lockup_settings.candy_machine != ctx.accounts.candy_machine.key() {
             return err!(CandyError::LockupSettingsAccountInvalid);
         }
         handle_lockup_settings(&ctx, &mut remaining_accounts_counter, lockup_settings)?;
+    }
+
+    if is_feature_active(
+        &ctx.accounts.candy_machine.data.uuid,
+        PERMISSIONED_SETTINGS_FEATURE_INDEX,
+    ) {
+        if ctx.remaining_accounts.len() <= remaining_accounts_counter {
+            return err!(CandyError::LockupSettingsAccountMissing);
+        }
+        let permissioned_settings_info = &ctx.remaining_accounts[remaining_accounts_counter];
+        remaining_accounts_counter += 1;
+        let permissioned_settings =
+            Account::<PermissionedSettings>::try_from(permissioned_settings_info)?;
+        if permissioned_settings.candy_machine != ctx.accounts.candy_machine.key() {
+            return err!(CandyError::PermissionedSettingsAccountInvalid);
+        }
+        handle_permissioned_settings(&ctx, &mut remaining_accounts_counter, permissioned_settings)?;
     }
 
     Ok(())
@@ -875,6 +924,138 @@ pub fn get_config_line(
 }
 
 #[inline(never)]
+fn handle_permissioned_settings<'info>(
+    ctx: &Context<'_, '_, '_, 'info, MintNFT<'info>>,
+    remaining_accounts_counter: &mut usize,
+    permissioned_settings: Account<PermissionedSettings>,
+) -> Result<()> {
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        punish_bots(
+            CandyError::LockupSettingsMissingAccounts,
+            ctx.accounts.payer.to_account_info(),
+            ctx.accounts.candy_machine.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            BOT_FEE,
+        )?;
+        return Ok(());
+    }
+
+    // token manager
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingTokenManager);
+    }
+    let token_manager = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // token manager token account
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingTokenManagerTokenAccount);
+    }
+    let token_manager_token_account = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // mint counter
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingMintCounter);
+    }
+    let mint_counter = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // recipient token account
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingRecipientTokenAccount);
+    }
+    let recipient_token_account = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // mint manager
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingMintManager);
+    }
+    let mint_manager = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // token manager program
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingTokenManagerProgram);
+    }
+    let token_manager_program = &ctx.remaining_accounts[*remaining_accounts_counter];
+    if token_manager_program.key() != cardinal_token_manager::id() {
+        return err!(CandyError::PermissionedSettingsInvalidTokenManagerProgram);
+    }
+    *remaining_accounts_counter += 1;
+
+    // token manager init
+    let init_ix = cardinal_token_manager::instructions::InitIx {
+        amount: 1,
+        kind: TokenManagerKind::Permissioned as u8,
+        invalidation_type: InvalidationType::Release as u8,
+        num_invalidators: 1,
+    };
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::InitCtx {
+        token_manager: token_manager.to_account_info(),
+        mint_counter: mint_counter.to_account_info(),
+        issuer: ctx.accounts.payer.to_account_info(),
+        payer: ctx.accounts.payer.to_account_info(),
+        issuer_token_account: recipient_token_account.to_account_info(),
+        system_program: ctx.accounts.system_program.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::init(cpi_ctx, init_ix)?;
+
+    // create associated token account for recipient
+    let cpi_accounts = associated_token::Create {
+        payer: ctx.accounts.payer.to_account_info(),
+        associated_token: token_manager_token_account.to_account_info(),
+        authority: token_manager.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        system_program: ctx.accounts.system_program.to_account_info(),
+        token_program: ctx.accounts.token_program.to_account_info(),
+        rent: ctx.accounts.rent.to_account_info(),
+    };
+    let cpi_context = CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts);
+    associated_token::create(cpi_context)?;
+
+    // token manager issue
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::IssueCtx {
+        token_manager: token_manager.to_account_info(),
+        token_manager_token_account: token_manager_token_account.to_account_info(),
+        issuer: ctx.accounts.payer.to_account_info(),
+        issuer_token_account: recipient_token_account.to_account_info(),
+        payer: ctx.accounts.payer.to_account_info(),
+        token_program: ctx.accounts.token_program.to_account_info(),
+        system_program: ctx.accounts.system_program.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::issue(cpi_ctx)?;
+
+    // add invalidator
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
+        token_manager: token_manager.to_account_info(),
+        issuer: ctx.accounts.payer.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::add_invalidator(cpi_ctx, permissioned_settings.creator)?;
+
+    // token manager claim
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::ClaimCtx {
+        token_manager: token_manager.to_account_info(),
+        token_manager_token_account: token_manager_token_account.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        recipient: ctx.accounts.payer.to_account_info(),
+        recipient_token_account: recipient_token_account.to_account_info(),
+        token_program: ctx.accounts.token_program.to_account_info(),
+        system_program: ctx.accounts.system_program.to_account_info(),
+    };
+    // let remaining_accounts = ctx.remaining_accounts.to_vec();
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts)
+        .with_remaining_accounts([mint_manager.to_account_info()].to_vec());
+    cardinal_token_manager::cpi::claim(cpi_ctx)?;
+    Ok(())
+}
+
+#[inline(never)]
 fn handle_lockup_settings<'info>(
     ctx: &Context<'_, '_, '_, 'info, MintNFT<'info>>,
     remaining_accounts_counter: &mut usize,
@@ -926,8 +1107,8 @@ fn handle_lockup_settings<'info>(
 
     // token manager init
     let init_ix = cardinal_token_manager::instructions::InitIx {
-        amount: 1, // todo change for fungible
-        kind: TokenManagerKind::Edition as u8,
+        amount: 1,
+        kind: TokenManagerKind::Permissioned as u8,
         invalidation_type: InvalidationType::Release as u8,
         num_invalidators: 1,
     };

@@ -93,6 +93,16 @@ pub struct LockupSettings {
     pub number: i64,
 }
 
+pub const PERMISSIONED_SETTINGS_SIZE: usize = 8 + std::mem::size_of::<PermissionedSettings>() + 8;
+pub const PERMISSIONED_SETTINGS_SEED: &str = "permissioned_settings";
+
+#[account]
+#[derive(Default, Debug)]
+pub struct PermissionedSettings {
+    pub candy_machine: Pubkey,
+    pub creator: Pubkey,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum LockupType {

@@ -102,4 +102,22 @@ pub enum CandyError {
     LockupSettingsMissingTokenManagerProgram,
     #[msg("Lockup settings invalid token manager program")]
     LockupSettingsInvalidTokenManagerProgram,
+    #[msg("Permissioned settings account invalid")]
+    PermissionedSettingsAccountInvalid,
+    #[msg("Permissioned settings missing mint manager")]
+    PermissionedSettingsMissingMintManager,
+    #[msg("Permissioned settings missing token manager")]
+    PermissionedSettingsMissingTokenManager,
+    #[msg("Permissioned settings missing token manager token account")]
+    PermissionedSettingsMissingTokenManagerTokenAccount,
+    #[msg("Permissioned settings missing mint counter")]
+    PermissionedSettingsMissingMintCounter,
+    #[msg("Permissioned settings missing recipient token accuont")]
+    PermissionedSettingsMissingRecipientTokenAccount,
+    #[msg("Permissioned settings missing mint manager")]
+    PermissionedSettingsMissingMintMananger,
+    #[msg("Permissioned settings missing token manager program")]
+    PermissionedSettingsMissingTokenManagerProgram,
+    #[msg("Permissioned settings invalid token manager program")]
+    PermissionedSettingsInvalidTokenManagerProgram,
 }

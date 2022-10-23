@@ -451,6 +451,68 @@
       "args": []
     },
     {
+      "name": "setPermissionedSettings",
+      "accounts": [
+        {
+          "name": "candyMachine",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "permissionedSettings",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "creator",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "closePermissionedSettings",
+      "accounts": [
+        {
+          "name": "candyMachine",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "permissionedSettings",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdrawFunds",
       "accounts": [
         {
@@ -532,6 +594,22 @@
           {
             "name": "number",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PermissionedSettings",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "candyMachine",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
           }
         ]
       }
@@ -1040,6 +1118,51 @@
       "code": 6049,
       "name": "LockupSettingsInvalidTokenManagerProgram",
       "msg": "Lockup settings invalid token manager program"
+    },
+    {
+      "code": 6050,
+      "name": "PermissionedSettingsAccountInvalid",
+      "msg": "Permissioned settings account invalid"
+    },
+    {
+      "code": 6051,
+      "name": "PermissionedSettingsMissingMintManager",
+      "msg": "Permissioned settings missing mint manager"
+    },
+    {
+      "code": 6052,
+      "name": "PermissionedSettingsMissingTokenManager",
+      "msg": "Permissioned settings missing token manager"
+    },
+    {
+      "code": 6053,
+      "name": "PermissionedSettingsMissingTokenManagerTokenAccount",
+      "msg": "Permissioned settings missing token manager token account"
+    },
+    {
+      "code": 6054,
+      "name": "PermissionedSettingsMissingMintCounter",
+      "msg": "Permissioned settings missing mint counter"
+    },
+    {
+      "code": 6055,
+      "name": "PermissionedSettingsMissingRecipientTokenAccount",
+      "msg": "Permissioned settings missing recipient token accuont"
+    },
+    {
+      "code": 6056,
+      "name": "PermissionedSettingsMissingMintMananger",
+      "msg": "Permissioned settings missing mint manager"
+    },
+    {
+      "code": 6057,
+      "name": "PermissionedSettingsMissingTokenManagerProgram",
+      "msg": "Permissioned settings missing token manager program"
+    },
+    {
+      "code": 6058,
+      "name": "PermissionedSettingsInvalidTokenManagerProgram",
+      "msg": "Permissioned settings invalid token manager program"
     }
   ],
   "metadata": {

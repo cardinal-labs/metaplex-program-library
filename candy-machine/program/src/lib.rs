@@ -76,6 +76,17 @@ pub mod candy_machine {
         handle_close_lockup_settings(ctx)
     }
 
+    pub fn set_permissioned_settings(
+        ctx: Context<SetPermissionedSettings>,
+        creator: Pubkey,
+    ) -> Result<()> {
+        handle_set_permissioned_settings(ctx, creator)
+    }
+
+    pub fn close_permissioned_settings(ctx: Context<ClosePermissionedSettings>) -> Result<()> {
+        handle_close_permissioned_settings(ctx)
+    }
+
     pub fn withdraw_funds<'info>(ctx: Context<WithdrawFunds<'info>>) -> Result<()> {
         handle_withdraw_funds(ctx)
     }

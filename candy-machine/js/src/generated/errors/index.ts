@@ -1098,6 +1098,225 @@ createErrorFromNameLookup.set(
 );
 
 /**
+ * PermissionedSettingsAccountInvalid: 'Permissioned settings account invalid'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsAccountInvalidError extends Error {
+  readonly code: number = 0x17a2;
+  readonly name: string = 'PermissionedSettingsAccountInvalid';
+  constructor() {
+    super('Permissioned settings account invalid');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsAccountInvalidError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17a2, () => new PermissionedSettingsAccountInvalidError());
+createErrorFromNameLookup.set(
+  'PermissionedSettingsAccountInvalid',
+  () => new PermissionedSettingsAccountInvalidError(),
+);
+
+/**
+ * PermissionedSettingsMissingMintManager: 'Permissioned settings missing mint manager'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingMintManagerError extends Error {
+  readonly code: number = 0x17a3;
+  readonly name: string = 'PermissionedSettingsMissingMintManager';
+  constructor() {
+    super('Permissioned settings missing mint manager');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingMintManagerError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17a3, () => new PermissionedSettingsMissingMintManagerError());
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingMintManager',
+  () => new PermissionedSettingsMissingMintManagerError(),
+);
+
+/**
+ * PermissionedSettingsMissingTokenManager: 'Permissioned settings missing token manager'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingTokenManagerError extends Error {
+  readonly code: number = 0x17a4;
+  readonly name: string = 'PermissionedSettingsMissingTokenManager';
+  constructor() {
+    super('Permissioned settings missing token manager');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingTokenManagerError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17a4, () => new PermissionedSettingsMissingTokenManagerError());
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingTokenManager',
+  () => new PermissionedSettingsMissingTokenManagerError(),
+);
+
+/**
+ * PermissionedSettingsMissingTokenManagerTokenAccount: 'Permissioned settings missing token manager token account'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingTokenManagerTokenAccountError extends Error {
+  readonly code: number = 0x17a5;
+  readonly name: string = 'PermissionedSettingsMissingTokenManagerTokenAccount';
+  constructor() {
+    super('Permissioned settings missing token manager token account');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingTokenManagerTokenAccountError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(
+  0x17a5,
+  () => new PermissionedSettingsMissingTokenManagerTokenAccountError(),
+);
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingTokenManagerTokenAccount',
+  () => new PermissionedSettingsMissingTokenManagerTokenAccountError(),
+);
+
+/**
+ * PermissionedSettingsMissingMintCounter: 'Permissioned settings missing mint counter'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingMintCounterError extends Error {
+  readonly code: number = 0x17a6;
+  readonly name: string = 'PermissionedSettingsMissingMintCounter';
+  constructor() {
+    super('Permissioned settings missing mint counter');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingMintCounterError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17a6, () => new PermissionedSettingsMissingMintCounterError());
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingMintCounter',
+  () => new PermissionedSettingsMissingMintCounterError(),
+);
+
+/**
+ * PermissionedSettingsMissingRecipientTokenAccount: 'Permissioned settings missing recipient token accuont'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingRecipientTokenAccountError extends Error {
+  readonly code: number = 0x17a7;
+  readonly name: string = 'PermissionedSettingsMissingRecipientTokenAccount';
+  constructor() {
+    super('Permissioned settings missing recipient token accuont');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingRecipientTokenAccountError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(
+  0x17a7,
+  () => new PermissionedSettingsMissingRecipientTokenAccountError(),
+);
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingRecipientTokenAccount',
+  () => new PermissionedSettingsMissingRecipientTokenAccountError(),
+);
+
+/**
+ * PermissionedSettingsMissingMintMananger: 'Permissioned settings missing mint manager'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingMintManangerError extends Error {
+  readonly code: number = 0x17a8;
+  readonly name: string = 'PermissionedSettingsMissingMintMananger';
+  constructor() {
+    super('Permissioned settings missing mint manager');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingMintManangerError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17a8, () => new PermissionedSettingsMissingMintManangerError());
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingMintMananger',
+  () => new PermissionedSettingsMissingMintManangerError(),
+);
+
+/**
+ * PermissionedSettingsMissingTokenManagerProgram: 'Permissioned settings missing token manager program'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingTokenManagerProgramError extends Error {
+  readonly code: number = 0x17a9;
+  readonly name: string = 'PermissionedSettingsMissingTokenManagerProgram';
+  constructor() {
+    super('Permissioned settings missing token manager program');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingTokenManagerProgramError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(
+  0x17a9,
+  () => new PermissionedSettingsMissingTokenManagerProgramError(),
+);
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingTokenManagerProgram',
+  () => new PermissionedSettingsMissingTokenManagerProgramError(),
+);
+
+/**
+ * PermissionedSettingsInvalidTokenManagerProgram: 'Permissioned settings invalid token manager program'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsInvalidTokenManagerProgramError extends Error {
+  readonly code: number = 0x17aa;
+  readonly name: string = 'PermissionedSettingsInvalidTokenManagerProgram';
+  constructor() {
+    super('Permissioned settings invalid token manager program');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsInvalidTokenManagerProgramError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(
+  0x17aa,
+  () => new PermissionedSettingsInvalidTokenManagerProgramError(),
+);
+createErrorFromNameLookup.set(
+  'PermissionedSettingsInvalidTokenManagerProgram',
+  () => new PermissionedSettingsInvalidTokenManagerProgramError(),
+);
+
+/**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors
  * @category generated

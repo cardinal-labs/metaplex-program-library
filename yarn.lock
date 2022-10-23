@@ -41,6 +41,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cardinal/mpl-candy-machine-utils@workspace:candy-machine/js":
+  version: 0.0.0-use.local
+  resolution: "@cardinal/mpl-candy-machine-utils@workspace:candy-machine/js"
+  dependencies:
+    "@cardinal/token-manager": 1.4.6
+    "@metaplex-foundation/amman": ^0.10.0
+    "@metaplex-foundation/amman-client": ^0.1.0
+    "@metaplex-foundation/beet": ^0.4.0
+    "@metaplex-foundation/beet-solana": ^0.3.0
+    "@metaplex-foundation/cusper": ^0.0.2
+    "@metaplex-foundation/mpl-core": ^0.6.1
+    "@metaplex-foundation/mpl-token-metadata": 1.2.5
+    "@metaplex-foundation/solita": ^0.12.0
+    "@project-serum/anchor": ^0.24.2
+    "@solana/spl-token": 0.1.8
+    "@solana/web3.js": ^1.35.1
+    "@types/tape": ^4.13.2
+    eslint: ^8.3.0
+    prettier: ^2.5.1
+    rimraf: ^3.0.2
+    tape: ^5.5.3
+    typescript: ^4.6.2
+  languageName: unknown
+  linkType: soft
+
 "@cardinal/token-manager@npm:1.4.6":
   version: 1.4.6
   resolution: "@cardinal/token-manager@npm:1.4.6"
@@ -1132,31 +1157,6 @@ __metadata:
     eslint: ^8.3.0
     prettier: ^2.5.1
     rimraf: ^3.0.2
-    typescript: ^4.6.2
-  languageName: unknown
-  linkType: soft
-
-"@metaplex-foundation/mpl-candy-machine@workspace:candy-machine/js":
-  version: 0.0.0-use.local
-  resolution: "@metaplex-foundation/mpl-candy-machine@workspace:candy-machine/js"
-  dependencies:
-    "@cardinal/token-manager": 1.4.6
-    "@metaplex-foundation/amman": ^0.10.0
-    "@metaplex-foundation/amman-client": ^0.1.0
-    "@metaplex-foundation/beet": ^0.4.0
-    "@metaplex-foundation/beet-solana": ^0.3.0
-    "@metaplex-foundation/cusper": ^0.0.2
-    "@metaplex-foundation/mpl-core": ^0.6.1
-    "@metaplex-foundation/mpl-token-metadata": 1.2.5
-    "@metaplex-foundation/solita": ^0.12.0
-    "@project-serum/anchor": ^0.24.2
-    "@solana/spl-token": 0.1.8
-    "@solana/web3.js": ^1.35.1
-    "@types/tape": ^4.13.2
-    eslint: ^8.3.0
-    prettier: ^2.5.1
-    rimraf: ^3.0.2
-    tape: ^5.5.3
     typescript: ^4.6.2
   languageName: unknown
   linkType: soft
