@@ -116,6 +116,7 @@ pub struct MintNFT<'info> {
     // mint_counter
     // recipient_token_account
     // mint_manager
+    // collector
     // token program
     // token manager program
     // TODO
@@ -675,19 +676,6 @@ pub fn handle_mint_nft<'info>(
         ctx.accounts.rent.to_account_info(),
         candy_machine_creator.to_account_info(),
     ];
-
-    let master_edition_infos = vec![
-        ctx.accounts.master_edition.to_account_info(),
-        ctx.accounts.mint.to_account_info(),
-        ctx.accounts.mint_authority.to_account_info(),
-        ctx.accounts.payer.to_account_info(),
-        ctx.accounts.metadata.to_account_info(),
-        ctx.accounts.token_metadata_program.to_account_info(),
-        ctx.accounts.token_program.to_account_info(),
-        ctx.accounts.system_program.to_account_info(),
-        ctx.accounts.rent.to_account_info(),
-        candy_machine_creator.to_account_info(),
-    ];
     invoke_signed(
         &create_metadata_accounts_v2(
             ctx.accounts.token_metadata_program.key(),
@@ -709,20 +697,39 @@ pub fn handle_mint_nft<'info>(
         metadata_infos.as_slice(),
         &[&authority_seeds],
     )?;
-    invoke_signed(
-        &create_master_edition_v3(
-            ctx.accounts.token_metadata_program.key(),
-            ctx.accounts.master_edition.key(),
-            ctx.accounts.mint.key(),
-            candy_machine_creator.key(),
-            ctx.accounts.mint_authority.key(),
-            ctx.accounts.metadata.key(),
-            ctx.accounts.payer.key(),
-            Some(ctx.accounts.candy_machine.data.max_supply),
-        ),
-        master_edition_infos.as_slice(),
-        &[&authority_seeds],
-    )?;
+
+    // only make master edition if no permissioned setting
+    if !is_feature_active(
+        &ctx.accounts.candy_machine.data.uuid,
+        PERMISSIONED_SETTINGS_FEATURE_INDEX,
+    ) {
+        let master_edition_infos = vec![
+            ctx.accounts.master_edition.to_account_info(),
+            ctx.accounts.mint.to_account_info(),
+            ctx.accounts.mint_authority.to_account_info(),
+            ctx.accounts.payer.to_account_info(),
+            ctx.accounts.metadata.to_account_info(),
+            ctx.accounts.token_metadata_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+            candy_machine_creator.to_account_info(),
+        ];
+        invoke_signed(
+            &create_master_edition_v3(
+                ctx.accounts.token_metadata_program.key(),
+                ctx.accounts.master_edition.key(),
+                ctx.accounts.mint.key(),
+                candy_machine_creator.key(),
+                ctx.accounts.mint_authority.key(),
+                ctx.accounts.metadata.key(),
+                ctx.accounts.payer.key(),
+                Some(ctx.accounts.candy_machine.data.max_supply),
+            ),
+            master_edition_infos.as_slice(),
+            &[&authority_seeds],
+        )?;
+    }
 
     let mut new_update_authority = Some(ctx.accounts.candy_machine.authority);
 
@@ -975,6 +982,13 @@ fn handle_permissioned_settings<'info>(
     let mint_manager = &ctx.remaining_accounts[*remaining_accounts_counter];
     *remaining_accounts_counter += 1;
 
+    // collector
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::PermissionedSettingsMissingCollector);
+    }
+    let collector = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
     // token manager program
     if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
         return err!(CandyError::PermissionedSettingsMissingTokenManagerProgram);
@@ -984,6 +998,18 @@ fn handle_permissioned_settings<'info>(
         return err!(CandyError::PermissionedSettingsInvalidTokenManagerProgram);
     }
     *remaining_accounts_counter += 1;
+
+    // create mint manager
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::CreateMintManagerCtx {
+        mint_manager: mint_manager.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        freeze_authority: ctx.accounts.payer.to_account_info(),
+        payer: ctx.accounts.payer.to_account_info(),
+        token_program: ctx.accounts.token_program.to_account_info(),
+        system_program: ctx.accounts.system_program.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::create_mint_manager(cpi_ctx)?;
 
     // token manager init
     let init_ix = cardinal_token_manager::instructions::InitIx {
@@ -995,16 +1021,24 @@ fn handle_permissioned_settings<'info>(
     let cpi_accounts = cardinal_token_manager::cpi::accounts::InitCtx {
         token_manager: token_manager.to_account_info(),
         mint_counter: mint_counter.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
         issuer: ctx.accounts.payer.to_account_info(),
         payer: ctx.accounts.payer.to_account_info(),
         issuer_token_account: recipient_token_account.to_account_info(),
         system_program: ctx.accounts.system_program.to_account_info(),
-        mint: ctx.accounts.mint.to_account_info(),
     };
     let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
     cardinal_token_manager::cpi::init(cpi_ctx, init_ix)?;
 
-    // create associated token account for recipient
+    // add invalidator
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
+        token_manager: token_manager.to_account_info(),
+        issuer: ctx.accounts.payer.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::add_invalidator(cpi_ctx, permissioned_settings.creator)?;
+
+    // create associated token account for token manager
     let cpi_accounts = associated_token::Create {
         payer: ctx.accounts.payer.to_account_info(),
         associated_token: token_manager_token_account.to_account_info(),
@@ -1027,16 +1061,9 @@ fn handle_permissioned_settings<'info>(
         token_program: ctx.accounts.token_program.to_account_info(),
         system_program: ctx.accounts.system_program.to_account_info(),
     };
-    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts)
+        .with_remaining_accounts([collector.to_account_info()].to_vec());
     cardinal_token_manager::cpi::issue(cpi_ctx)?;
-
-    // add invalidator
-    let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
-        token_manager: token_manager.to_account_info(),
-        issuer: ctx.accounts.payer.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
-    cardinal_token_manager::cpi::add_invalidator(cpi_ctx, permissioned_settings.creator)?;
 
     // token manager claim
     let cpi_accounts = cardinal_token_manager::cpi::accounts::ClaimCtx {
@@ -1052,6 +1079,7 @@ fn handle_permissioned_settings<'info>(
     let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts)
         .with_remaining_accounts([mint_manager.to_account_info()].to_vec());
     cardinal_token_manager::cpi::claim(cpi_ctx)?;
+
     Ok(())
 }
 
@@ -1108,7 +1136,7 @@ fn handle_lockup_settings<'info>(
     // token manager init
     let init_ix = cardinal_token_manager::instructions::InitIx {
         amount: 1,
-        kind: TokenManagerKind::Permissioned as u8,
+        kind: TokenManagerKind::Edition as u8,
         invalidation_type: InvalidationType::Release as u8,
         num_invalidators: 1,
     };

@@ -120,4 +120,6 @@ pub enum CandyError {
     PermissionedSettingsMissingTokenManagerProgram,
     #[msg("Permissioned settings invalid token manager program")]
     PermissionedSettingsInvalidTokenManagerProgram,
+    #[msg("Permissioned settings missing collector")]
+    PermissionedSettingsMissingCollector,
 }

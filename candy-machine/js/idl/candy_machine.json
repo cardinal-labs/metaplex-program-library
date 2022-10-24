@@ -1,5 +1,5 @@
 {
-  "version": "4.0.2",
+  "version": "4.4.0",
   "name": "candy_machine",
   "instructions": [
     {
@@ -1163,10 +1163,15 @@
       "code": 6058,
       "name": "PermissionedSettingsInvalidTokenManagerProgram",
       "msg": "Permissioned settings invalid token manager program"
+    },
+    {
+      "code": 6059,
+      "name": "PermissionedSettingsMissingCollector",
+      "msg": "Permissioned settings missing collector"
     }
   ],
   "metadata": {
-    "address": "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ",
+    "address": "ccmpgw68x3NJmNPePFrTm6TsKCEYUVhF8rEAVL9rSDd",
     "origin": "anchor",
     "binaryVersion": "0.24.2",
     "libVersion": "0.24.2"

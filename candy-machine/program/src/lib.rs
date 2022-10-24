@@ -9,7 +9,7 @@ pub use errors::CandyError;
 pub use processor::*;
 pub use state::*;
 pub use utils::*;
-declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
+declare_id!("ccmpgw68x3NJmNPePFrTm6TsKCEYUVhF8rEAVL9rSDd");
 
 #[program]
 pub mod candy_machine {

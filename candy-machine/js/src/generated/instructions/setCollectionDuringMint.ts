@@ -63,7 +63,7 @@ export const setCollectionDuringMintInstructionDiscriminator = [103, 17, 200, 25
  */
 export function createSetCollectionDuringMintInstruction(
   accounts: SetCollectionDuringMintInstructionAccounts,
-  programId = new web3.PublicKey('cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ'),
+  programId = new web3.PublicKey('ccmpgw68x3NJmNPePFrTm6TsKCEYUVhF8rEAVL9rSDd'),
 ) {
   const [data] = setCollectionDuringMintStruct.serialize({
     instructionDiscriminator: setCollectionDuringMintInstructionDiscriminator,

@@ -1317,6 +1317,29 @@ createErrorFromNameLookup.set(
 );
 
 /**
+ * PermissionedSettingsMissingCollector: 'Permissioned settings missing collector'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class PermissionedSettingsMissingCollectorError extends Error {
+  readonly code: number = 0x17ab;
+  readonly name: string = 'PermissionedSettingsMissingCollector';
+  constructor() {
+    super('Permissioned settings missing collector');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, PermissionedSettingsMissingCollectorError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17ab, () => new PermissionedSettingsMissingCollectorError());
+createErrorFromNameLookup.set(
+  'PermissionedSettingsMissingCollector',
+  () => new PermissionedSettingsMissingCollectorError(),
+);
+
+/**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors
  * @category generated

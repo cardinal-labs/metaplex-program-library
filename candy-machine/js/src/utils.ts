@@ -1,4 +1,5 @@
 import { programs } from '@cardinal/token-manager';
+import { CRANK_KEY } from '@cardinal/token-manager/dist/cjs/programs/tokenManager';
 import { utils } from '@project-serum/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
@@ -46,6 +47,81 @@ export const CONFIG_ARRAY_START =
   32 +
   1; // gatekeeper
 
+const PERMISSIONED_SETTINGS_SEED = 'permissioned_settings';
+export const findPermissionedSettingsId = async (
+  candyMachineId: PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await PublicKey.findProgramAddress(
+    [utils.bytes.utf8.encode(PERMISSIONED_SETTINGS_SEED), candyMachineId.toBuffer()],
+    PROGRAM_ID,
+  );
+};
+
+export const remainingAccountsForPermissioned = async (
+  candyMachineId: PublicKey,
+  mintId: PublicKey,
+  userTokenAccountId: PublicKey,
+) => {
+  const [permissionedSettingsId] = await findPermissionedSettingsId(candyMachineId);
+  const [tokenManagerId] = await programs.tokenManager.pda.findTokenManagerAddress(mintId);
+  const tokenManagerTokenAccountId = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mintId,
+    tokenManagerId,
+    true,
+  );
+  const [mintCounterId] = await programs.tokenManager.pda.findMintCounterId(mintId);
+  const [mintManagerId] = await programs.tokenManager.pda.findMintManagerId(mintId);
+  return [
+    {
+      pubkey: permissionedSettingsId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: tokenManagerId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: tokenManagerTokenAccountId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: mintCounterId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: userTokenAccountId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: mintManagerId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: CRANK_KEY,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: programs.tokenManager.TOKEN_MANAGER_ADDRESS,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: ASSOCIATED_TOKEN_PROGRAM_ID,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+};
+
 const LOCKUP_SETTINGS_SEED = 'lockup_settings';
 export const findLockupSettingsId = async (
   candyMachineId: PublicKey,
@@ -55,7 +131,6 @@ export const findLockupSettingsId = async (
     PROGRAM_ID,
   );
 };
-
 export const remainingAccountsForLockup = async (
   candyMachineId: PublicKey,
   mintId: PublicKey,

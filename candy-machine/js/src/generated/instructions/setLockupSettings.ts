@@ -68,7 +68,7 @@ export const setLockupSettingsInstructionDiscriminator = [124, 128, 161, 215, 10
 export function createSetLockupSettingsInstruction(
   accounts: SetLockupSettingsInstructionAccounts,
   args: SetLockupSettingsInstructionArgs,
-  programId = new web3.PublicKey('cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ'),
+  programId = new web3.PublicKey('ccmpgw68x3NJmNPePFrTm6TsKCEYUVhF8rEAVL9rSDd'),
 ) {
   const [data] = setLockupSettingsStruct.serialize({
     instructionDiscriminator: setLockupSettingsInstructionDiscriminator,
