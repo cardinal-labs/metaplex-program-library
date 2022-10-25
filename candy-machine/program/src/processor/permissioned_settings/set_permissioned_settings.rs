@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use anchor_lang::prelude::*;
 
 use crate::{
     constants::PERMISSIONED_SETTINGS_FEATURE_INDEX,
     set_feature_flag,
     state::{PERMISSIONED_SETTINGS_SEED, PERMISSIONED_SETTINGS_SIZE},
-    CandyMachine, PermissionedSettings,
+    CandyMachine, PermissionedSettings, GLOBAL_TRANSFER_AUTHORITY,
 };
 
 /// Set the collection PDA for the candy machine
@@ -29,11 +31,18 @@ pub struct SetPermissionedSettings<'info> {
 pub fn handle_set_permissioned_settings(
     ctx: Context<SetPermissionedSettings>,
     creator: Pubkey,
+    transfer_authority: Option<Pubkey>,
 ) -> Result<()> {
     let candy_machine = &mut ctx.accounts.candy_machine;
     let permissioned_settings = &mut ctx.accounts.permissioned_settings;
     permissioned_settings.candy_machine = candy_machine.key();
     permissioned_settings.creator = creator;
+    if let Some(authority) = transfer_authority {
+        permissioned_settings.transfer_authority = authority;
+    } else {
+        permissioned_settings.transfer_authority =
+            Pubkey::from_str(GLOBAL_TRANSFER_AUTHORITY).unwrap();
+    }
     set_feature_flag(
         &mut candy_machine.data.uuid,
         PERMISSIONED_SETTINGS_FEATURE_INDEX,

@@ -1030,6 +1030,17 @@ fn handle_permissioned_settings<'info>(
     let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
     cardinal_token_manager::cpi::init(cpi_ctx, init_ix)?;
 
+    // set transfer authority
+    let cpi_accounts = cardinal_token_manager::cpi::accounts::SetTransferAuthorityCtx {
+        token_manager: token_manager.to_account_info(),
+        issuer: ctx.accounts.payer.to_account_info(),
+    };
+    let cpi_ctx = CpiContext::new(token_manager_program.to_account_info(), cpi_accounts);
+    cardinal_token_manager::cpi::set_transfer_authority(
+        cpi_ctx,
+        permissioned_settings.transfer_authority,
+    )?;
+
     // add invalidator
     let cpi_accounts = cardinal_token_manager::cpi::accounts::AddInvalidatorCtx {
         token_manager: token_manager.to_account_info(),

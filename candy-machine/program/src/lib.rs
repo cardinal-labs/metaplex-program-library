@@ -79,8 +79,9 @@ pub mod candy_machine {
     pub fn set_permissioned_settings(
         ctx: Context<SetPermissionedSettings>,
         creator: Pubkey,
+        transfer_authority: Option<Pubkey>,
     ) -> Result<()> {
-        handle_set_permissioned_settings(ctx, creator)
+        handle_set_permissioned_settings(ctx, creator, transfer_authority)
     }
 
     pub fn close_permissioned_settings(ctx: Context<ClosePermissionedSettings>) -> Result<()> {

@@ -6,8 +6,8 @@
  */
 
 import * as web3 from '@solana/web3.js';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
 import * as beet from '@metaplex-foundation/beet';
+import * as beetSolana from '@metaplex-foundation/beet-solana';
 
 /**
  * @category Instructions
@@ -16,13 +16,14 @@ import * as beet from '@metaplex-foundation/beet';
  */
 export type SetPermissionedSettingsInstructionArgs = {
   creator: web3.PublicKey;
+  transferAuthority: beet.COption<web3.PublicKey>;
 };
 /**
  * @category Instructions
  * @category SetPermissionedSettings
  * @category generated
  */
-export const setPermissionedSettingsStruct = new beet.BeetArgsStruct<
+export const setPermissionedSettingsStruct = new beet.FixableBeetArgsStruct<
   SetPermissionedSettingsInstructionArgs & {
     instructionDiscriminator: number[] /* size: 8 */;
   }
@@ -30,6 +31,7 @@ export const setPermissionedSettingsStruct = new beet.BeetArgsStruct<
   [
     ['instructionDiscriminator', beet.uniformFixedSizeArray(beet.u8, 8)],
     ['creator', beetSolana.publicKey],
+    ['transferAuthority', beet.coption(beetSolana.publicKey)],
   ],
   'SetPermissionedSettingsInstructionArgs',
 );

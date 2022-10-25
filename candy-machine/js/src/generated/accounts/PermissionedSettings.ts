@@ -17,6 +17,7 @@ import * as beet from '@metaplex-foundation/beet';
 export type PermissionedSettingsArgs = {
   candyMachine: web3.PublicKey;
   creator: web3.PublicKey;
+  transferAuthority: web3.PublicKey;
 };
 
 export const permissionedSettingsDiscriminator = [19, 206, 24, 59, 125, 147, 136, 121];
@@ -28,13 +29,17 @@ export const permissionedSettingsDiscriminator = [19, 206, 24, 59, 125, 147, 136
  * @category generated
  */
 export class PermissionedSettings implements PermissionedSettingsArgs {
-  private constructor(readonly candyMachine: web3.PublicKey, readonly creator: web3.PublicKey) {}
+  private constructor(
+    readonly candyMachine: web3.PublicKey,
+    readonly creator: web3.PublicKey,
+    readonly transferAuthority: web3.PublicKey,
+  ) {}
 
   /**
    * Creates a {@link PermissionedSettings} instance from the provided args.
    */
   static fromArgs(args: PermissionedSettingsArgs) {
-    return new PermissionedSettings(args.candyMachine, args.creator);
+    return new PermissionedSettings(args.candyMachine, args.creator, args.transferAuthority);
   }
 
   /**
@@ -133,6 +138,7 @@ export class PermissionedSettings implements PermissionedSettingsArgs {
     return {
       candyMachine: this.candyMachine.toBase58(),
       creator: this.creator.toBase58(),
+      transferAuthority: this.transferAuthority.toBase58(),
     };
   }
 }
@@ -151,6 +157,7 @@ export const permissionedSettingsBeet = new beet.BeetStruct<
     ['accountDiscriminator', beet.uniformFixedSizeArray(beet.u8, 8)],
     ['candyMachine', beetSolana.publicKey],
     ['creator', beetSolana.publicKey],
+    ['transferAuthority', beetSolana.publicKey],
   ],
   PermissionedSettings.fromArgs,
   'PermissionedSettings',

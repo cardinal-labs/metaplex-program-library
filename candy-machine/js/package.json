@@ -1,6 +1,6 @@
 {
   "name": "@cardinal/mpl-candy-machine-utils",
-  "version": "4.4.1",
+  "version": "4.4.3",
   "programVersion": "4.0.2",
   "description": "MPL Candy Machine JavaScript API. This MPL package is for the current generation of candy machine which is 2.0.0",
   "main": "dist/cjs/src/mpl-candy-machine.js",

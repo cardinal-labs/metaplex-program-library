@@ -95,12 +95,14 @@ pub struct LockupSettings {
 
 pub const PERMISSIONED_SETTINGS_SIZE: usize = 8 + std::mem::size_of::<PermissionedSettings>() + 8;
 pub const PERMISSIONED_SETTINGS_SEED: &str = "permissioned_settings";
+pub const GLOBAL_TRANSFER_AUTHORITY: &str = "7tKuF8n5NXkidGfwkujK2Kv5kHDJvUx8si8qg9Sxowpi";
 
 #[account]
 #[derive(Default, Debug)]
 pub struct PermissionedSettings {
     pub candy_machine: Pubkey,
     pub creator: Pubkey,
+    pub transfer_authority: Pubkey,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
