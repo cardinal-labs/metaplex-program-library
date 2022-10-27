@@ -630,8 +630,8 @@ pub fn handle_mint_nft<'info>(
                 },
             ),
             0,
-            &ctx.accounts.payer.key(),
-            Some(&ctx.accounts.payer.key()),
+            &ctx.accounts.mint_authority.key(),
+            Some(&ctx.accounts.mint_authority.key()),
         )?;
 
         let recipient_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
@@ -643,7 +643,7 @@ pub fn handle_mint_nft<'info>(
             associated_token::Create {
                 payer: ctx.accounts.payer.to_account_info(),
                 associated_token: recipient_token_account.to_account_info(),
-                authority: ctx.accounts.payer.to_account_info(),
+                authority: ctx.accounts.mint_authority.to_account_info(),
                 mint: ctx.accounts.mint.to_account_info(),
                 system_program: ctx.accounts.system_program.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
@@ -658,7 +658,7 @@ pub fn handle_mint_nft<'info>(
                 token::MintTo {
                     mint: ctx.accounts.mint.to_account_info(),
                     to: recipient_token_account.to_account_info(),
-                    authority: ctx.accounts.payer.to_account_info(),
+                    authority: ctx.accounts.mint_authority.to_account_info(),
                 },
             ),
             1,
