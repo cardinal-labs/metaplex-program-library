@@ -519,6 +519,72 @@
       "args": []
     },
     {
+      "name": "setCssSettings",
+      "accounts": [
+        {
+          "name": "candyMachine",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "ccsSettings",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "creator",
+          "type": "publicKey"
+        },
+        {
+          "name": "ruleset",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "closeCcsSettings",
+      "accounts": [
+        {
+          "name": "candyMachine",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "ccsSettings",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdrawFunds",
       "accounts": [
         {
@@ -619,6 +685,26 @@
           },
           {
             "name": "transferAuthority",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CCSSettings",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "candyMachine",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "ruleset",
             "type": "publicKey"
           }
         ]
@@ -1178,6 +1264,61 @@
       "code": 6059,
       "name": "PermissionedSettingsMissingCollector",
       "msg": "Permissioned settings missing collector"
+    },
+    {
+      "code": 6060,
+      "name": "CCSSettingsAccountInvalid",
+      "msg": "CCS setting account invalid"
+    },
+    {
+      "code": 6061,
+      "name": "CCSSettingsMissingMintManager",
+      "msg": "CCS setting missing mint manager"
+    },
+    {
+      "code": 6062,
+      "name": "CCSSettingsMissingRuleset",
+      "msg": "CCS setting missing ruleset"
+    },
+    {
+      "code": 6063,
+      "name": "CCSSettingsMissingHolderTokenAccount",
+      "msg": "CCS setting missing holder token account"
+    },
+    {
+      "code": 6064,
+      "name": "CCSSettingsMissingTokenAuthority",
+      "msg": "CCS setting missing token authority"
+    },
+    {
+      "code": 6065,
+      "name": "CCSSettingsMissingRulesetCollector",
+      "msg": "CCS setting missing ruleset collector"
+    },
+    {
+      "code": 6066,
+      "name": "CCSSettingsMissingCollector",
+      "msg": "CCS setting missing collector"
+    },
+    {
+      "code": 6067,
+      "name": "CCSSettingsMissingAuthority",
+      "msg": "CCS setting missing authority"
+    },
+    {
+      "code": 6068,
+      "name": "CCSSettingsMissingCreatorStandardProgram",
+      "msg": "CCS setting missing creator standard program"
+    },
+    {
+      "code": 6069,
+      "name": "CCSSettingsInvalidRuleset",
+      "msg": "CCS setting invalid ruleset"
+    },
+    {
+      "code": 6070,
+      "name": "CCSSettingsInvalidAuthority",
+      "msg": "CCS setting invalid authority"
     }
   ],
   "metadata": {

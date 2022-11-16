@@ -88,6 +88,18 @@ pub mod candy_machine {
         handle_close_permissioned_settings(ctx)
     }
 
+    pub fn set_css_settings(
+        ctx: Context<SetCCSSettingsCtx>,
+        creator: Pubkey,
+        ruleset: Pubkey,
+    ) -> Result<()> {
+        handle_set_ccs_settings(ctx, creator, ruleset)
+    }
+
+    pub fn close_ccs_settings(ctx: Context<CloseCCSSettingsCtx>) -> Result<()> {
+        handle_close_ccs_settings(ctx)
+    }
+
     pub fn withdraw_funds<'info>(ctx: Context<WithdrawFunds<'info>>) -> Result<()> {
         handle_withdraw_funds(ctx)
     }

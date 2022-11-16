@@ -6,6 +6,7 @@ use anchor_spl::{
     token::{self, Token},
 };
 use arrayref::array_ref;
+use cardinal_creator_standard::instructions::init_mint_manager;
 use mpl_token_metadata::{
     instruction::{
         create_master_edition_v3, create_metadata_accounts_v2, update_metadata_accounts_v2,
@@ -27,14 +28,14 @@ use solana_program::{
 
 use crate::{
     constants::{
-        A_TOKEN, BLOCK_HASHES, BOT_FEE, COLLECTIONS_FEATURE_INDEX, COMPUTE_ID, CONFIG_ARRAY_START,
-        CONFIG_LINE_SIZE, CUPCAKE_ID, EXPIRE_OFFSET, GUMDROP_ID, LOCKUP_SETTINGS_FEATURE_INDEX,
-        PERMISSIONED_SETTINGS_FEATURE_INDEX, PREFIX,
+        A_TOKEN, BLOCK_HASHES, BOT_FEE, CCS_SETTINGS_FEATURE_INDEX, COLLECTIONS_FEATURE_INDEX,
+        COMPUTE_ID, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, CUPCAKE_ID, EXPIRE_OFFSET, GUMDROP_ID,
+        LOCKUP_SETTINGS_FEATURE_INDEX, PERMISSIONED_SETTINGS_FEATURE_INDEX, PREFIX,
     },
     state::{LockupSettings, PermissionedSettings},
     utils::*,
-    CandyError, CandyMachine, CandyMachineData, ConfigLine, EndSettingType, LockupType,
-    WhitelistMintMode, WhitelistMintSettings,
+    CCSSettings, CandyError, CandyMachine, CandyMachineData, ConfigLine, EndSettingType,
+    LockupType, WhitelistMintMode, WhitelistMintSettings,
 };
 
 use cardinal_token_manager::{
@@ -702,6 +703,9 @@ pub fn handle_mint_nft<'info>(
     if !is_feature_active(
         &ctx.accounts.candy_machine.data.uuid,
         PERMISSIONED_SETTINGS_FEATURE_INDEX,
+    ) && !is_feature_active(
+        &ctx.accounts.candy_machine.data.uuid,
+        CCS_SETTINGS_FEATURE_INDEX,
     ) {
         let master_edition_infos = vec![
             ctx.accounts.master_edition.to_account_info(),
@@ -788,6 +792,38 @@ pub fn handle_mint_nft<'info>(
             return err!(CandyError::PermissionedSettingsAccountInvalid);
         }
         handle_permissioned_settings(&ctx, &mut remaining_accounts_counter, permissioned_settings)?;
+    }
+
+    if is_feature_active(
+        &ctx.accounts.candy_machine.data.uuid,
+        PERMISSIONED_SETTINGS_FEATURE_INDEX,
+    ) {
+        if ctx.remaining_accounts.len() <= remaining_accounts_counter {
+            return err!(CandyError::LockupSettingsAccountMissing);
+        }
+        let permissioned_settings_info = &ctx.remaining_accounts[remaining_accounts_counter];
+        remaining_accounts_counter += 1;
+        let permissioned_settings =
+            Account::<PermissionedSettings>::try_from(permissioned_settings_info)?;
+        if permissioned_settings.candy_machine != ctx.accounts.candy_machine.key() {
+            return err!(CandyError::PermissionedSettingsAccountInvalid);
+        }
+        handle_permissioned_settings(&ctx, &mut remaining_accounts_counter, permissioned_settings)?;
+    }
+    if is_feature_active(
+        &ctx.accounts.candy_machine.data.uuid,
+        CCS_SETTINGS_FEATURE_INDEX,
+    ) {
+        if ctx.remaining_accounts.len() <= remaining_accounts_counter {
+            return err!(CandyError::LockupSettingsAccountMissing);
+        }
+        let ccs_settings_info = &ctx.remaining_accounts[remaining_accounts_counter];
+        remaining_accounts_counter += 1;
+        let ccs_settings = Account::<CCSSettings>::try_from(ccs_settings_info)?;
+        if ccs_settings.candy_machine != ctx.accounts.candy_machine.key() {
+            return err!(CandyError::CCSSettingsAccountInvalid);
+        }
+        handle_ccs_settings(&ctx, &mut remaining_accounts_counter, ccs_settings)?;
     }
 
     Ok(())
@@ -928,6 +964,123 @@ pub fn get_config_line(
     };
 
     Ok(config_line)
+}
+
+#[inline(never)]
+fn handle_ccs_settings<'info>(
+    ctx: &Context<'_, '_, '_, 'info, MintNFT<'info>>,
+    remaining_accounts_counter: &mut usize,
+    ccs_settings: Account<CCSSettings>,
+) -> Result<()> {
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        punish_bots(
+            CandyError::LockupSettingsMissingAccounts,
+            ctx.accounts.payer.to_account_info(),
+            ctx.accounts.candy_machine.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            BOT_FEE,
+        )?;
+        return Ok(());
+    }
+
+    // mint_manager
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingMintManager);
+    }
+    let mint_manager = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // ruleset
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingRuleset);
+    }
+    let ruleset = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // holder_token_account
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingHolderTokenAccount);
+    }
+    let holder_token_account = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // token_authority
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingTokenAuthority);
+    }
+    let token_authority = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // ruleset_collector
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingRulesetCollector);
+    }
+    let ruleset_collector = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // collector
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingCollector);
+    }
+    let collector = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // authority
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingAuthority);
+    }
+    let authority = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    // cardinal_creator_standard
+    if ctx.remaining_accounts.len() <= *remaining_accounts_counter {
+        return err!(CandyError::CCSSettingsMissingCreatorStandardProgram);
+    }
+    let cardinal_creator_standard = &ctx.remaining_accounts[*remaining_accounts_counter];
+    *remaining_accounts_counter += 1;
+
+    if ccs_settings.ruleset != ruleset.key() {
+        return err!(CandyError::CCSSettingsInvalidRuleset);
+    }
+    if ccs_settings.creator != authority.key() {
+        return err!(CandyError::CCSSettingsInvalidAuthority);
+    }
+    if cardinal_creator_standard.key() != cardinal_creator_standard::id() {
+        return err!(CandyError::CCSSettingsInvalidCreatorStandardProgram);
+    }
+
+    // init_mint_manager
+    invoke(
+        &init_mint_manager(
+            cardinal_creator_standard.key(),
+            mint_manager.key(),
+            ctx.accounts.mint.key(),
+            ruleset.key(),
+            holder_token_account.key(),
+            token_authority.key(),
+            ruleset_collector.key(),
+            collector.key(),
+            ccs_settings.creator.key(),
+            ctx.accounts.payer.key(),
+        )?,
+        &[
+            mint_manager.to_account_info(),
+            ctx.accounts.mint.to_account_info(),
+            ruleset.to_account_info(),
+            holder_token_account.to_account_info(),
+            token_authority.to_account_info(),
+            ruleset_collector.to_account_info(),
+            collector.to_account_info(),
+            authority.to_account_info(),
+            ctx.accounts.payer.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            cardinal_creator_standard.to_account_info(),
+        ],
+    )?;
+
+    Ok(())
 }
 
 #[inline(never)]

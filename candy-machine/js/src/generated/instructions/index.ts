@@ -1,4 +1,5 @@
 export * from './addConfigLines';
+export * from './closeCcsSettings';
 export * from './closeLockupSettings';
 export * from './closePermissionedSettings';
 export * from './initializeCandyMachine';
@@ -6,6 +7,7 @@ export * from './mintNft';
 export * from './removeCollection';
 export * from './setCollection';
 export * from './setCollectionDuringMint';
+export * from './setCssSettings';
 export * from './setLockupSettings';
 export * from './setPermissionedSettings';
 export * from './updateAuthority';

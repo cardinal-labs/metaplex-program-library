@@ -1,4 +1,5 @@
 pub mod add_config_lines;
+pub mod ccs_settings;
 pub mod collection;
 pub mod initialize;
 pub mod lockup_settings;
@@ -8,6 +9,7 @@ pub mod update;
 pub mod withdraw;
 
 pub use add_config_lines::*;
+pub use ccs_settings::*;
 pub use collection::*;
 pub use initialize::*;
 pub use lockup_settings::*;

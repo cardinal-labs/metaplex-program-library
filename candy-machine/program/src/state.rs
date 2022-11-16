@@ -105,6 +105,17 @@ pub struct PermissionedSettings {
     pub transfer_authority: Pubkey,
 }
 
+pub const CCS_SETTINGS_SIZE: usize = 8 + std::mem::size_of::<CCSSettings>() + 8;
+pub const CCS_SETTINGS_SEED: &str = "ccs_settings";
+
+#[account]
+#[derive(Default, Debug)]
+pub struct CCSSettings {
+    pub candy_machine: Pubkey,
+    pub creator: Pubkey,
+    pub ruleset: Pubkey,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum LockupType {

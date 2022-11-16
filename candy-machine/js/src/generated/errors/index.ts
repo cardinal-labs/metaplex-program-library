@@ -1340,6 +1340,259 @@ createErrorFromNameLookup.set(
 );
 
 /**
+ * CCSSettingsAccountInvalid: 'CCS setting account invalid'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsAccountInvalidError extends Error {
+  readonly code: number = 0x17ac;
+  readonly name: string = 'CCSSettingsAccountInvalid';
+  constructor() {
+    super('CCS setting account invalid');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsAccountInvalidError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17ac, () => new CCSSettingsAccountInvalidError());
+createErrorFromNameLookup.set(
+  'CCSSettingsAccountInvalid',
+  () => new CCSSettingsAccountInvalidError(),
+);
+
+/**
+ * CCSSettingsMissingMintManager: 'CCS setting missing mint manager'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingMintManagerError extends Error {
+  readonly code: number = 0x17ad;
+  readonly name: string = 'CCSSettingsMissingMintManager';
+  constructor() {
+    super('CCS setting missing mint manager');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingMintManagerError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17ad, () => new CCSSettingsMissingMintManagerError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingMintManager',
+  () => new CCSSettingsMissingMintManagerError(),
+);
+
+/**
+ * CCSSettingsMissingRuleset: 'CCS setting missing ruleset'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingRulesetError extends Error {
+  readonly code: number = 0x17ae;
+  readonly name: string = 'CCSSettingsMissingRuleset';
+  constructor() {
+    super('CCS setting missing ruleset');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingRulesetError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17ae, () => new CCSSettingsMissingRulesetError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingRuleset',
+  () => new CCSSettingsMissingRulesetError(),
+);
+
+/**
+ * CCSSettingsMissingHolderTokenAccount: 'CCS setting missing holder token account'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingHolderTokenAccountError extends Error {
+  readonly code: number = 0x17af;
+  readonly name: string = 'CCSSettingsMissingHolderTokenAccount';
+  constructor() {
+    super('CCS setting missing holder token account');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingHolderTokenAccountError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17af, () => new CCSSettingsMissingHolderTokenAccountError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingHolderTokenAccount',
+  () => new CCSSettingsMissingHolderTokenAccountError(),
+);
+
+/**
+ * CCSSettingsMissingTokenAuthority: 'CCS setting missing token authority'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingTokenAuthorityError extends Error {
+  readonly code: number = 0x17b0;
+  readonly name: string = 'CCSSettingsMissingTokenAuthority';
+  constructor() {
+    super('CCS setting missing token authority');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingTokenAuthorityError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b0, () => new CCSSettingsMissingTokenAuthorityError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingTokenAuthority',
+  () => new CCSSettingsMissingTokenAuthorityError(),
+);
+
+/**
+ * CCSSettingsMissingRulesetCollector: 'CCS setting missing ruleset collector'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingRulesetCollectorError extends Error {
+  readonly code: number = 0x17b1;
+  readonly name: string = 'CCSSettingsMissingRulesetCollector';
+  constructor() {
+    super('CCS setting missing ruleset collector');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingRulesetCollectorError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b1, () => new CCSSettingsMissingRulesetCollectorError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingRulesetCollector',
+  () => new CCSSettingsMissingRulesetCollectorError(),
+);
+
+/**
+ * CCSSettingsMissingCollector: 'CCS setting missing collector'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingCollectorError extends Error {
+  readonly code: number = 0x17b2;
+  readonly name: string = 'CCSSettingsMissingCollector';
+  constructor() {
+    super('CCS setting missing collector');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingCollectorError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b2, () => new CCSSettingsMissingCollectorError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingCollector',
+  () => new CCSSettingsMissingCollectorError(),
+);
+
+/**
+ * CCSSettingsMissingAuthority: 'CCS setting missing authority'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingAuthorityError extends Error {
+  readonly code: number = 0x17b3;
+  readonly name: string = 'CCSSettingsMissingAuthority';
+  constructor() {
+    super('CCS setting missing authority');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingAuthorityError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b3, () => new CCSSettingsMissingAuthorityError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingAuthority',
+  () => new CCSSettingsMissingAuthorityError(),
+);
+
+/**
+ * CCSSettingsMissingCreatorStandardProgram: 'CCS setting missing creator standard program'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsMissingCreatorStandardProgramError extends Error {
+  readonly code: number = 0x17b4;
+  readonly name: string = 'CCSSettingsMissingCreatorStandardProgram';
+  constructor() {
+    super('CCS setting missing creator standard program');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsMissingCreatorStandardProgramError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b4, () => new CCSSettingsMissingCreatorStandardProgramError());
+createErrorFromNameLookup.set(
+  'CCSSettingsMissingCreatorStandardProgram',
+  () => new CCSSettingsMissingCreatorStandardProgramError(),
+);
+
+/**
+ * CCSSettingsInvalidRuleset: 'CCS setting invalid ruleset'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsInvalidRulesetError extends Error {
+  readonly code: number = 0x17b5;
+  readonly name: string = 'CCSSettingsInvalidRuleset';
+  constructor() {
+    super('CCS setting invalid ruleset');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsInvalidRulesetError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b5, () => new CCSSettingsInvalidRulesetError());
+createErrorFromNameLookup.set(
+  'CCSSettingsInvalidRuleset',
+  () => new CCSSettingsInvalidRulesetError(),
+);
+
+/**
+ * CCSSettingsInvalidAuthority: 'CCS setting invalid authority'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class CCSSettingsInvalidAuthorityError extends Error {
+  readonly code: number = 0x17b6;
+  readonly name: string = 'CCSSettingsInvalidAuthority';
+  constructor() {
+    super('CCS setting invalid authority');
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, CCSSettingsInvalidAuthorityError);
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x17b6, () => new CCSSettingsInvalidAuthorityError());
+createErrorFromNameLookup.set(
+  'CCSSettingsInvalidAuthority',
+  () => new CCSSettingsInvalidAuthorityError(),
+);
+
+/**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors
  * @category generated

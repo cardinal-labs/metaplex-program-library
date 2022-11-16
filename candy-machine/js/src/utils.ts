@@ -1,9 +1,16 @@
 import { programs } from '@cardinal/token-manager';
 import { CRANK_KEY } from '@cardinal/token-manager/dist/cjs/programs/tokenManager';
-import { utils } from '@project-serum/anchor';
+import { utils, Wallet } from '@project-serum/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { PROGRAM_ID } from './generated';
+import {
+  findMintManagerId,
+  findRulesetId,
+  PROGRAM_ID as CardinalCreatorStandardId,
+  Ruleset,
+  DEFAULT_COLLECTOR,
+} from '@cardinal/creator-standard';
 
 export const CONFIG_LINE_SIZE = 4 + 32 + 4 + 200;
 export const MAX_NAME_LENGTH = 32;
@@ -111,6 +118,84 @@ export const remainingAccountsForPermissioned = async (
     },
     {
       pubkey: programs.tokenManager.TOKEN_MANAGER_ADDRESS,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: ASSOCIATED_TOKEN_PROGRAM_ID,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+};
+
+const CCS_SETTINGS_SEED = 'ccs_settings';
+export const findCcsSettingsId = async (
+  candyMachineId: PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await PublicKey.findProgramAddress(
+    [utils.bytes.utf8.encode(CCS_SETTINGS_SEED), candyMachineId.toBuffer()],
+    PROGRAM_ID,
+  );
+};
+
+export const remainingAccountsForCcs = async (
+  connection: Connection,
+  wallet: Wallet,
+  candyMachineId: PublicKey,
+  creatorId: PublicKey,
+  mintId: PublicKey,
+  holderTokenAccountId: PublicKey,
+  rulesetName: string,
+) => {
+  const [ccsSettingsId] = await findCcsSettingsId(candyMachineId);
+  const mintManagerId = findMintManagerId(mintId);
+  const rulesetId = findRulesetId(rulesetName);
+  const rulesetData = await Ruleset.fromAccountAddress(connection, rulesetId);
+
+  return [
+    {
+      pubkey: ccsSettingsId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: mintManagerId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: rulesetId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: holderTokenAccountId,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: wallet.publicKey,
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: rulesetData.collector,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: DEFAULT_COLLECTOR,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: creatorId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: CardinalCreatorStandardId,
       isSigner: false,
       isWritable: false,
     },

@@ -76,6 +76,8 @@ pub enum CandyError {
     GatewayProgramError,
     #[msg("Invalid candy machine authority")]
     InvalidCandyMachineAuthority,
+
+    // Lockup Settings
     #[msg("Lockup settings lockup type is invalid")]
     InvalidLockupType,
     #[msg("Lockup settings account missing")]
@@ -102,6 +104,8 @@ pub enum CandyError {
     LockupSettingsMissingTokenManagerProgram,
     #[msg("Lockup settings invalid token manager program")]
     LockupSettingsInvalidTokenManagerProgram,
+
+    // Permissioned Settings
     #[msg("Permissioned settings account invalid")]
     PermissionedSettingsAccountInvalid,
     #[msg("Permissioned settings missing mint manager")]
@@ -122,4 +126,30 @@ pub enum CandyError {
     PermissionedSettingsInvalidTokenManagerProgram,
     #[msg("Permissioned settings missing collector")]
     PermissionedSettingsMissingCollector,
+
+    // CCS
+    #[msg("CCS setting account invalid")]
+    CCSSettingsAccountInvalid,
+    #[msg("CCS setting missing mint manager")]
+    CCSSettingsMissingMintManager,
+    #[msg("CCS setting missing ruleset")]
+    CCSSettingsMissingRuleset,
+    #[msg("CCS setting missing holder token account")]
+    CCSSettingsMissingHolderTokenAccount,
+    #[msg("CCS setting missing token authority")]
+    CCSSettingsMissingTokenAuthority,
+    #[msg("CCS setting missing ruleset collector")]
+    CCSSettingsMissingRulesetCollector,
+    #[msg("CCS setting missing collector")]
+    CCSSettingsMissingCollector,
+    #[msg("CCS setting missing authority")]
+    CCSSettingsMissingAuthority,
+    #[msg("CCS setting missing creator standard program")]
+    CCSSettingsMissingCreatorStandardProgram,
+    #[msg("CCS setting invalid ruleset")]
+    CCSSettingsInvalidRuleset,
+    #[msg("CCS setting invalid authority")]
+    CCSSettingsInvalidAuthority,
+    #[msg("CCS setting invalid creator standard program")]
+    CCSSettingsInvalidCreatorStandardProgram,
 }
