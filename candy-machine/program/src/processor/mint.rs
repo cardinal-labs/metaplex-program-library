@@ -1,4 +1,4 @@
-use std::{cell::RefMut, ops::Deref};
+use std::{cell::RefMut, convert::TryInto, ops::Deref, str::FromStr};
 
 use anchor_lang::prelude::*;
 use anchor_spl::{
@@ -7,6 +7,8 @@ use anchor_spl::{
 };
 use arrayref::array_ref;
 use cardinal_creator_standard::instructions::init_mint_manager;
+use cardinal_creator_standard::state::DEFAULT_MINIMUM_CREATOR_SHARE;
+use cardinal_creator_standard::state::DEFAULT_REQUIRED_CREATOR;
 use mpl_token_metadata::{
     instruction::{
         create_master_edition_v3, create_metadata_accounts_v2, update_metadata_accounts_v2,
@@ -595,12 +597,67 @@ pub fn handle_mint_nft<'info>(
             share: 0,
         }];
 
-    for c in &ctx.accounts.candy_machine.data.creators {
+    if is_feature_active(
+        &ctx.accounts.candy_machine.data.uuid,
+        CCS_SETTINGS_FEATURE_INDEX,
+    ) {
         creators.push(mpl_token_metadata::state::Creator {
-            address: c.address,
+            address: Pubkey::from_str(DEFAULT_REQUIRED_CREATOR).expect("Pubkey error"),
             verified: false,
-            share: c.share,
+            share: DEFAULT_MINIMUM_CREATOR_SHARE,
         });
+
+        let original_creators_share = 100_u8
+            .checked_sub(DEFAULT_MINIMUM_CREATOR_SHARE)
+            .expect("Sub error");
+        let original_creators = &ctx.accounts.candy_machine.data.creators;
+        let creator_amounts: Vec<u8> = original_creators
+            .clone()
+            .into_iter()
+            .map(|creator| {
+                u64::from(creator.share)
+                    .checked_mul(u64::from(original_creators_share))
+                    .expect("Mul error")
+                    .checked_div(100_u64)
+                    .expect("Div error")
+                    .try_into()
+                    .expect("Conversion error")
+            })
+            .collect();
+        let creator_amounts_sum: u8 = creator_amounts.iter().sum();
+        let mut creators_share_remainder = original_creators_share
+            .checked_sub(creator_amounts_sum)
+            .expect("Div error");
+
+        for original_creator in original_creators {
+            let share_remainder = u8::from(creators_share_remainder > 0);
+            let share = u64::from(original_creator.share)
+                .checked_mul(u64::from(original_creators_share))
+                .expect("Mul error")
+                .checked_div(100_u64)
+                .expect("Div error")
+                .checked_add(u64::from(share_remainder))
+                .expect("Add error")
+                .try_into()
+                .expect("Conversion error");
+            creators_share_remainder = creators_share_remainder.saturating_sub(1);
+
+            if share > 0 {
+                creators.push(mpl_token_metadata::state::Creator {
+                    address: original_creator.address,
+                    share,
+                    verified: false,
+                })
+            }
+        }
+    } else {
+        for c in &ctx.accounts.candy_machine.data.creators {
+            creators.push(mpl_token_metadata::state::Creator {
+                address: c.address,
+                verified: false,
+                share: c.share,
+            });
+        }
     }
 
     if ctx.accounts.mint.data_is_empty() {
@@ -1055,17 +1112,17 @@ fn handle_ccs_settings<'info>(
             cardinal_creator_standard.key(),
             mint_manager.key(),
             ctx.accounts.mint.key(),
+            ctx.accounts.metadata.key(),
             ruleset.key(),
             holder_token_account.key(),
             token_authority.key(),
-            ruleset_collector.key(),
-            collector.key(),
             ccs_settings.creator.key(),
             ctx.accounts.payer.key(),
         )?,
         &[
             mint_manager.to_account_info(),
             ctx.accounts.mint.to_account_info(),
+            ctx.accounts.metadata.to_account_info(),
             ruleset.to_account_info(),
             holder_token_account.to_account_info(),
             token_authority.to_account_info(),
