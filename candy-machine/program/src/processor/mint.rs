@@ -853,22 +853,6 @@ pub fn handle_mint_nft<'info>(
 
     if is_feature_active(
         &ctx.accounts.candy_machine.data.uuid,
-        PERMISSIONED_SETTINGS_FEATURE_INDEX,
-    ) {
-        if ctx.remaining_accounts.len() <= remaining_accounts_counter {
-            return err!(CandyError::LockupSettingsAccountMissing);
-        }
-        let permissioned_settings_info = &ctx.remaining_accounts[remaining_accounts_counter];
-        remaining_accounts_counter += 1;
-        let permissioned_settings =
-            Account::<PermissionedSettings>::try_from(permissioned_settings_info)?;
-        if permissioned_settings.candy_machine != ctx.accounts.candy_machine.key() {
-            return err!(CandyError::PermissionedSettingsAccountInvalid);
-        }
-        handle_permissioned_settings(&ctx, &mut remaining_accounts_counter, permissioned_settings)?;
-    }
-    if is_feature_active(
-        &ctx.accounts.candy_machine.data.uuid,
         CCS_SETTINGS_FEATURE_INDEX,
     ) {
         if ctx.remaining_accounts.len() <= remaining_accounts_counter {
